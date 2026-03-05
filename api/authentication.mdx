@@ -1,0 +1,260 @@
+---
+title: 'Authentication'
+description: 'User registration and authentication endpoints'
+---
+
+## Overview
+
+The Bounce Project uses a token-based authentication system with encrypted timestamps. Users must sign up first, then sign in to receive a token valid for 1 hour.
+
+## Sign Up
+
+Create a new user account.
+
+### Endpoint
+
+```
+POST /signup/
+```
+
+### Request Body
+
+<ParamField body="username" type="string" required>
+  Unique username for the account (max 20 characters)
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User password (max 10 characters)
+</ParamField>
+
+<Note>
+  The request model accepts `username` and `password` fields. The `phone` field is used internally but should be included in the signup process.
+</Note>
+
+### Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/signup/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "john_doe",
+    "password": "securepass"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:8000/signup/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    username: 'john_doe',
+    password: 'securepass'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+url = "http://localhost:8000/signup/"
+payload = {
+    "username": "john_doe",
+    "password": "securepass"
+}
+
+response = requests.post(url, json=payload)
+print(response.json())
+```
+</CodeGroup>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Status message indicating success or if user already exists
+</ResponseField>
+
+#### Success Response (201)
+
+```json
+{
+  "message": "user created"
+}
+```
+
+#### User Exists Response (200)
+
+```json
+{
+  "message": "user already exists try to signin"
+}
+```
+
+## Sign In
+
+Authenticate and receive a session token.
+
+### Endpoint
+
+```
+POST /signin/
+```
+
+### Request Body
+
+<ParamField body="username" type="string" required>
+  Your registered username
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Your account password
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/signin/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "john_doe",
+    "password": "securepass"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:8000/signin/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    username: 'john_doe',
+    password: 'securepass'
+  })
+});
+
+const data = await response.json();
+const token = data.token;
+
+// Store token for subsequent requests
+localStorage.setItem('authToken', token);
+```
+
+```python Python
+import requests
+
+url = "http://localhost:8000/signin/"
+payload = {
+    "username": "john_doe",
+    "password": "securepass"
+}
+
+response = requests.post(url, json=payload)
+token = response.json().get('token')
+print(f"Token: {token}")
+```
+</CodeGroup>
+
+### Response
+
+<ResponseField name="token" type="string">
+  Encrypted authentication token (Fernet encrypted timestamp)
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Error message if user does not exist
+</ResponseField>
+
+#### Success Response (200)
+
+```json
+{
+  "token": "gAAAAABmX1Y2MjEFEL2VYqK0T8YybZiIWU=*hl+75Qq/xtAaUktrCXtA3Q==*6DJ4ExTU/c0J6EeH/xyEMA==*LvXtk0D8jealdGc3NU2oGg=="
+}
+```
+
+#### User Not Found Response (200)
+
+```json
+{
+  "message": "user does not exists pls sign up"
+}
+```
+
+## Token Generation
+
+Tokens are generated using the following mechanism:
+
+1. Current timestamp is captured when user signs in
+2. Timestamp is formatted as `YYYY-MM-DD HH:MM:SS`
+3. Timestamp is encrypted using Fernet symmetric encryption
+4. Encrypted token is returned to the client
+
+### Token Validation
+
+When making authenticated requests, the token is validated:
+
+- Token is decrypted to retrieve the generation timestamp
+- Current time is compared with generation timestamp
+- If difference exceeds **3600 seconds (1 hour)**, token is invalid
+- Invalid tokens return a `403 Forbidden` error
+
+<Warning>
+  Tokens are single-use per device and expire after 1 hour. Plan your session management accordingly.
+</Warning>
+
+## Using the Token
+
+Include the token as a query parameter in all protected endpoints:
+
+```javascript
+const token = localStorage.getItem('authToken');
+const url = `/buyStock/?token=${encodeURIComponent(token)}`;
+
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(stockDetails)
+});
+```
+
+## Database Schema
+
+User authentication data is stored in the `authdetails` table:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `phone` | varchar(10) | User phone number |
+| `username` | varchar(20) | Unique username |
+| `password` | varchar(10) | User password |
+| `createdOn` | timestamp | Account creation timestamp |
+
+<Note>
+  All authentication actions are logged in the `apptransactions` table for audit purposes.
+</Note>
+
+## Security Considerations
+
+<Warning>
+  **Important Security Notes:**
+  - Passwords are stored in plain text in the current implementation
+  - For production use, implement proper password hashing (bcrypt, Argon2)
+  - The encryption key is hardcoded - use environment variables
+  - Consider implementing HTTPS for all communications
+  - Add password complexity requirements
+  - Implement rate limiting for authentication endpoints
+</Warning>
+
+## Next Steps
+
+<Card title="Stock Operations" icon="chart-line" href="/api/stock-operations">
+  Learn how to buy, sell, and manage stocks with your authentication token
+</Card>

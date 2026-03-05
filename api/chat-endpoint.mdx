@@ -1,0 +1,369 @@
+---
+title: 'Chat Endpoint'
+description: 'AI-powered natural language stock analysis using Gradio'
+---
+
+## Overview
+
+The Bounce Project provides an AI-powered chat interface that processes natural language queries about stocks, performs sentiment analysis on recent news, and generates investment recommendations with price forecasts.
+
+## Architecture
+
+The chat functionality is built using **Gradio** and runs separately from the FastAPI server:
+
+- **Gradio Server:** `http://127.0.0.1:7860/`
+- **Endpoint:** `/predict`
+- **Integration:** Frontend connects via `@gradio/client` library
+
+## How It Works
+
+<Steps>
+  <Step title="Natural Language Processing">
+    User query is processed using EdenAI's text generation API to extract stock name and ticker symbol
+  </Step>
+  <Step title="News Scraping">
+    Recent news headlines are scraped from BusinessToday.in for the identified stock
+  </Step>
+  <Step title="Sentiment Analysis">
+    Headlines are analyzed using Cardiff NLP's RoBERTa sentiment model to determine market sentiment
+  </Step>
+  <Step title="Price Forecasting">
+    Historical stock data is fetched from Yahoo Finance and Prophet model generates 365-day forecast
+  </Step>
+  <Step title="AI Recommendation">
+    Based on sentiment scores, a natural language recommendation is generated
+  </Step>
+</Steps>
+
+## Using the Gradio Client
+
+### Frontend Integration
+
+The recommended way to interact with the chat API is via the Gradio JavaScript client:
+
+<CodeGroup>
+```javascript React Integration
+import { client } from "@gradio/client";
+
+async function fetchResponse(userQuery, setDisplay, setArticles, setDataframe) {
+  try {
+    console.log("You entered", userQuery);
+    
+    // Connect to Gradio server
+    const app = await client("http://127.0.0.1:7860/");
+    
+    // Make prediction request
+    const result = await app.predict("/predict", [[userQuery]]);
+    
+    console.log(`Result:`, result.data);
+    
+    // Extract response components
+    setDisplay(result.data[0]);      // AI recommendation text
+    setDataframe(result.data[1]);    // Forecast dataframe
+    setArticles(result.data[2]);     // News headlines array
+    
+  } catch (error) {
+    console.log("Error handled:", error);
+  }
+}
+```
+
+```javascript Usage Example
+// Example user query
+const userQuery = "Should I invest in Google stock?";
+
+// Call the function
+fetchResponse(
+  userQuery,
+  setDisplayedResponse,
+  setArticles,
+  setDataframe
+);
+```
+</CodeGroup>
+
+### Request Format
+
+<ParamField body="userQuery" type="string" required>
+  Natural language question about a stock (e.g., "Should I buy Apple?", "How is Tesla performing?")
+</ParamField>
+
+### Request Example
+
+```javascript
+const app = await client("http://127.0.0.1:7860/");
+const result = await app.predict("/predict", [[
+  "What do you think about Microsoft stock?"
+]]);
+```
+
+## Response Format
+
+The Gradio endpoint returns a tuple with three components:
+
+### Response Components
+
+<ResponseField name="data[0]" type="string">
+  **AI Recommendation Text** - Natural language investment advice based on sentiment analysis
+</ResponseField>
+
+<ResponseField name="data[1]" type="DataFrame">
+  **Forecast Data** - Prophet model forecast with columns:
+  - `ds` - Date timestamp
+  - `yhat` - Predicted stock price
+  - `yhat_lower` - Lower bound prediction
+  - `yhat_upper` - Upper bound prediction
+</ResponseField>
+
+<ResponseField name="data[2]" type="array">
+  **News Headlines** - Array of recent news article titles scraped from BusinessToday.in
+</ResponseField>
+
+### Example Response
+
+```javascript
+{
+  data: [
+    // [0] AI Recommendation
+    "The stock Google has momentum. Recent trends suggest that the stock is going up and it is a good time to buy the stock and hold it for a while.",
+    
+    // [1] Forecast DataFrame
+    {
+      headers: ["ds", "yhat", "yhat_lower", "yhat_upper"],
+      data: [
+        ["2024-03-01", 145.23, 142.10, 148.36],
+        ["2024-03-02", 146.15, 143.02, 149.28],
+        // ... 365 days of predictions
+      ]
+    },
+    
+    // [2] News Headlines
+    [
+      "Google announces new AI features",
+      "Alphabet stock rises on strong earnings",
+      "Google Cloud revenue beats expectations"
+    ]
+  ]
+}
+```
+
+## AI Processing Pipeline
+
+### 1. Stock Identification
+
+The `fetch_stock_name()` function uses EdenAI's text generation API:
+
+```python
+text = ("I will provide a sentence enclosed in square brackets '[ ]'."
+        " The sentence will pertain to a stock in the stock market."
+        " Your task is to identify the mentioned stock and return its ticker symbol."
+        " Present the name of the stock along with its ticker symbol in the format 'stock_name: ticker_symbol'."
+        " For example, if the stock mentioned is 'Apple', then the output should be 'Apple: AAPL'."
+        "The sentence is: "
+        )
+
+input_text = text + prompt + " "
+```
+
+**Returns:** `(name, ticker)` tuple (e.g., `("Google", "GOOGL")`)
+
+### 2. Sentiment Analysis
+
+The `fetch_news_sentiment()` function:
+
+1. Scrapes BusinessToday.in for recent headlines
+2. Uses Cardiff NLP's Twitter RoBERTa model for sentiment classification
+3. Calculates aggregate sentiment scores:
+   - `neg` - Negative sentiment score (0-1)
+   - `neu` - Neutral sentiment score (0-1)
+   - `pos` - Positive sentiment score (0-1)
+
+**Sentiment Thresholds:**
+- **Neutral:** `neu > 0.55` → Hold recommendation
+- **Positive:** `pos > neg` → Buy recommendation
+- **Negative:** `neg > pos` → Sell recommendation
+
+### 3. Price Forecasting
+
+The `make_graph()` function:
+
+1. Fetches historical data from Yahoo Finance (2020-01-01 to 2024-03-01)
+2. Trains Facebook Prophet time series model
+3. Generates 365-day forecast
+4. Returns forecast DataFrame with predictions
+
+### 4. Recommendation Generation
+
+Based on sentiment analysis, a natural language recommendation is generated:
+
+<Expandable title="Neutral Market (neu > 0.55)">
+```python
+payload = {
+    "providers": "openai,cohere",
+    "text": f"Generate a sentence in natural language which tells me that the stock {name} is stable currently. "
+            f"It wont have a lot of positive or negative fluctuations and you should hold it if you have it but "
+            f"no need to buy on priority",
+    "temperature": 0.9,
+    "max_tokens": 250
+}
+```
+</Expandable>
+
+<Expandable title="Positive Market (pos > neg)">
+```python
+payload = {
+    "providers": "openai,cohere",
+    "text": f"Generate a sentence in natural language which tells me that the stock {name} has momentum. "
+            f"Recent trends suggest that the stock is going up and "
+            f"it is a good time to buy the stock and hold it for a while",
+    "temperature": 0.9,
+    "max_tokens": 250
+}
+```
+</Expandable>
+
+<Expandable title="Negative Market (neg > pos)">
+```python
+payload = {
+    "providers": "openai,cohere",
+    "text": f"Generate a sentence in natural language which tells me that the stock {name} is not doing well. "
+            f"Recent trends suggest that the stock is going down and "
+            f"it is a good time to sell the stock and not buy it",
+    "temperature": 0.9,
+    "max_tokens": 250
+}
+```
+</Expandable>
+
+## Example Queries
+
+<AccordionGroup>
+  <Accordion title="Should I invest in Google?">
+    **Input:** "Should I invest in Google?"
+    
+    **Processing:**
+    - Identifies stock: Google (GOOGL)
+    - Scrapes recent Google news
+    - Analyzes sentiment
+    - Generates forecast
+    - Returns buy/hold/sell recommendation
+  </Accordion>
+  
+  <Accordion title="How is Apple performing?">
+    **Input:** "How is Apple performing?"
+    
+    **Processing:**
+    - Identifies stock: Apple (AAPL)
+    - Fetches Apple news headlines
+    - Calculates sentiment scores
+    - Provides performance analysis
+  </Accordion>
+  
+  <Accordion title="Tell me about Tesla stock">
+    **Input:** "Tell me about Tesla stock"
+    
+    **Processing:**
+    - Identifies stock: Tesla (TSLA)
+    - Gathers recent news
+    - Analyzes market sentiment
+    - Generates 1-year price forecast
+  </Accordion>
+</AccordionGroup>
+
+## Alternative FastAPI Endpoint
+
+A chat endpoint is also defined in the FastAPI server (currently stub):
+
+### Endpoint
+
+```
+GET /chat/?token={token}&req={query}
+```
+
+<ParamField query="token" type="string" required>
+  Authentication token
+</ParamField>
+
+<ParamField query="req" type="string" required>
+  User query string
+</ParamField>
+
+<Note>
+  This endpoint is currently a placeholder. The production implementation uses the Gradio interface.
+</Note>
+
+## Technical Components
+
+### External APIs Used
+
+1. **EdenAI Text Generation**
+   - Provider: OpenAI, Cohere
+   - Used for: Stock name extraction and recommendation text
+   - Temperature: 0.2 (extraction), 0.9 (generation)
+
+2. **Yahoo Finance (yfinance)**
+   - Used for: Historical stock price data
+   - Date range: 2020-01-01 to 2024-03-01
+
+3. **BusinessToday.in**
+   - Used for: News headline scraping
+   - Format: `https://www.businesstoday.in/topic/{stock_name}`
+
+### ML Models
+
+1. **Cardiff NLP Twitter RoBERTa**
+   - Model: `cardiffnlp/twitter-roberta-base-sentiment-latest`
+   - Purpose: Sentiment classification
+   - Output: Negative, Neutral, Positive scores
+
+2. **Facebook Prophet**
+   - Purpose: Time series forecasting
+   - Forecast period: 365 days
+   - Output: Date, predicted value, confidence intervals
+
+## Frontend Display
+
+The frontend application displays three components:
+
+1. **AI Recommendation** - Text advice in the chat interface
+2. **Stock History Graph** - Interactive Plotly chart with forecast
+3. **News Articles** - List of recent headlines
+
+```jsx
+<UserChat displayedResponse={displayedResponse} />
+<StockHistoryGraph dataframe={dataframe} />
+<Articles articles={articles} />
+```
+
+## Best Practices
+
+<Warning>
+  **Rate Limiting:** Be mindful of API rate limits when making frequent requests to EdenAI and news scraping endpoints.
+</Warning>
+
+<Tip>
+  **Query Format:** For best results, phrase queries naturally (e.g., "Should I buy Apple stock?" rather than just "AAPL").
+</Tip>
+
+<Info>
+  **Stock Coverage:** The system works best with major publicly traded companies that have ticker symbols and news coverage.
+</Info>
+
+## Limitations
+
+- News scraping depends on BusinessToday.in availability and structure
+- Sentiment analysis is based on headlines only, not full articles
+- Stock identification requires clear company name in the query
+- Forecast accuracy depends on historical data patterns
+- No real-time market data integration
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Overview" icon="book" href="/api/overview">
+    Return to API overview
+  </Card>
+  <Card title="Stock Operations" icon="chart-line" href="/api/stock-operations">
+    Manage your portfolio
+  </Card>
+</CardGroup>

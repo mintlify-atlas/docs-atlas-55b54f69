@@ -1,0 +1,416 @@
+---
+title: 'Stock Prediction'
+description: 'ML-powered price forecasting using Facebook Prophet'
+icon: 'chart-line'
+---
+
+## Overview
+
+The Bounce Project uses **Facebook Prophet**, a time-series forecasting model, to predict stock prices up to 365 days into the future. By analyzing historical price data from Yahoo Finance, the system generates data-driven forecasts with confidence intervals.
+
+## Why Prophet?
+
+Prophet is ideal for stock prediction because it:
+
+<CardGroup cols={2}>
+  <Card title="Handles Missing Data" icon="puzzle-piece">
+    Robust to gaps in trading data (weekends, holidays)
+  </Card>
+  <Card title="Captures Trends" icon="arrow-trend-up">
+    Automatically detects long-term upward/downward movements
+  </Card>
+  <Card title="Seasonality Detection" icon="calendar">
+    Identifies weekly, monthly, and yearly patterns
+  </Card>
+  <Card title="Confidence Intervals" icon="chart-area">
+    Provides uncertainty bounds for predictions
+  </Card>
+</CardGroup>
+
+<Info>
+  Prophet was developed by Meta (Facebook) for forecasting at scale and is used in production by Airbnb, Lyft, and other tech companies.
+</Info>
+
+## The Prediction Pipeline
+
+<Steps>
+  <Step title="Fetch Historical Data">
+    Download 4+ years of daily closing prices from Yahoo Finance using yfinance
+  </Step>
+  
+  <Step title="Prepare Data">
+    Transform data into Prophet's required format (date column: `ds`, value column: `y`)
+  </Step>
+  
+  <Step title="Train Model">
+    Fit the Prophet model on historical data to learn trends and patterns
+  </Step>
+  
+  <Step title="Generate Forecast">
+    Predict future prices for the next 365 days with confidence intervals
+  </Step>
+  
+  <Step title="Visualize">
+    Display interactive Plotly chart showing historical data and predictions
+  </Step>
+</Steps>
+
+## Data Collection
+
+The system fetches stock data using the yfinance library:
+
+```python
+# From app.py:26-30
+import yfinance as yf
+
+def fetch_stock_data(ticker_symbol, start_date, end_date):
+    stock_data = yf.download(ticker_symbol, start=start_date, end=end_date)
+    df = stock_data[['Adj Close']].reset_index()
+    df = df.rename(columns={'Date': 'ds', 'Adj Close': 'y'})
+    return df
+```
+
+### Data Format
+
+Prophet requires a specific DataFrame structure:
+
+| Column | Description | Example |
+|--------|-------------|--------|
+| `ds` | Date (datetime) | 2024-01-15 |
+| `y` | Target value (adjusted close price) | 185.42 |
+
+<Note>
+  **Adjusted Close Price** accounts for stock splits, dividends, and other corporate actions, providing more accurate historical values than raw closing prices.
+</Note>
+
+## Model Training
+
+Training Prophet is straightforward:
+
+```python
+# From app.py:33-36
+from prophet import Prophet
+
+def train_prophet_model(df):
+    model = Prophet()
+    model.fit(df)
+    return model
+```
+
+Prophet automatically:
+- Detects trend changes (changepoints)
+- Identifies seasonality (weekly, yearly)
+- Handles outliers and missing values
+- Fits the model using Stan optimization
+
+<Tip>
+  Prophet uses **Bayesian inference** under the hood, which allows it to provide uncertainty estimates (confidence intervals) for predictions.
+</Tip>
+
+## Generating Forecasts
+
+The system predicts 365 days into the future:
+
+```python
+# From app.py:40-43
+def make_forecast(model, periods):
+    future = model.make_future_dataframe(periods=periods)
+    forecast = model.predict(future)
+    return forecast
+```
+
+### Forecast Output
+
+The forecast DataFrame contains:
+
+| Column | Description |
+|--------|-------------|
+| `ds` | Future dates |
+| `yhat` | Predicted value (point estimate) |
+| `yhat_lower` | Lower bound of 95% confidence interval |
+| `yhat_upper` | Upper bound of 95% confidence interval |
+| `trend` | Overall trend component |
+| `seasonal` | Seasonal component |
+
+<CodeGroup>
+```python Example Forecast Row
+{
+  'ds': '2025-06-15',
+  'yhat': 198.45,        # Predicted price
+  'yhat_lower': 185.23,  # Lower bound
+  'yhat_upper': 211.67,  # Upper bound
+  'trend': 195.10,
+  'seasonal': 3.35
+}
+```
+
+```python Full Workflow
+# From app.py:118-125
+def make_graph(ticker):
+    ticker_symbol = ticker
+    start_date = "2020-01-01"
+    end_date = "2024-03-01"
+    
+    df = fetch_stock_data(ticker_symbol, start_date, end_date)
+    model = train_prophet_model(df)
+    forecast = make_forecast(model, 365)  # 1-year forecast
+    
+    return forecast
+```
+</CodeGroup>
+
+## Complete Prediction Flow
+
+Here's how prediction integrates into the main application:
+
+```python
+# From app.py:128-175
+def main(prompt):
+    # 1. Extract stock name and ticker from user query
+    name, ticker = fetch_stock_name(prompt)
+    
+    # 2. Analyze sentiment from news
+    neg, neu, pos, news = fetch_news_sentiment(name)
+    
+    # 3. Generate trading recommendation based on sentiment
+    sum = neg + neu + pos
+    neg = neg / sum
+    neu = neu / sum
+    pos = pos / sum
+    
+    if neu > 0.55:
+        recommendation = "Stock is stable - HOLD"
+    elif pos > neg:
+        recommendation = "Positive momentum - BUY"
+    else:
+        recommendation = "Bearish trends - SELL"
+    
+    # 4. Generate Prophet forecast
+    graph = make_graph(ticker)
+    
+    # 5. Return recommendation, forecast, and news
+    return recommendation, graph, news
+```
+
+<Info>
+  The main function combines sentiment analysis and price prediction to provide comprehensive stock analysis.
+</Info>
+
+## Visualization
+
+The frontend displays the forecast using Plotly:
+
+```jsx
+// From StockHistoryGraph.jsx:5-35
+import Plotly from "plotly.js-dist-min";
+
+const StockHistoryGraph = ({ dataframe }) => {
+  useEffect(() => {
+    if (dataframe !== null && dataframe.data) {
+      // Extract dates (column 0) and predictions (column 18 = yhat)
+      const dx = dataframe.data.map((item) => item[0]);
+      const dy = dataframe.data.map((item) => item[18]);
+      
+      const plotData = [{
+        x: dx,
+        y: dy,
+        type: "scatter",
+        mode: "lines",
+        marker: { color: "white" }
+      }];
+      
+      const layout = {
+        title: "Stock History",
+        xaxis: { title: "Date" },
+        yaxis: { title: "Price" },
+        plot_bgcolor: "black",
+        paper_bgcolor: "black",
+        font: { color: "white" }
+      };
+      
+      Plotly.newPlot("stock-graph", plotData, layout);
+    }
+  }, [dataframe]);
+  
+  return <div id="stock-graph" className="flex text-white p-4 m-4 rounded-lg"></div>;
+};
+```
+
+<Note>
+  The graph displays the `yhat` column (column 18) which is Prophet's point prediction for stock price.
+</Note>
+
+## Interpreting Predictions
+
+### Understanding the Forecast Chart
+
+<Steps>
+  <Step title="Historical Data (Blue/White)">
+    Past stock prices show actual performance and establish the baseline trend
+  </Step>
+  
+  <Step title="Predicted Prices (Forecast Line)">
+    The continuation shows Prophet's point estimates for future prices
+  </Step>
+  
+  <Step title="Confidence Bands (Shaded Area)">
+    The wider the band, the more uncertainty in the prediction. Near-term predictions are typically more confident.
+  </Step>
+  
+  <Step title="Trend Direction">
+    Upward slope = bullish forecast, downward slope = bearish forecast, flat = stable
+  </Step>
+</Steps>
+
+### Example Interpretation
+
+```
+Stock: AAPL (Apple)
+Current Price: $185.00
+30-day Forecast: $192.00 [188.00 - 196.00]
+365-day Forecast: $210.00 [180.00 - 240.00]
+
+Interpretation:
+- Short-term: Bullish (3.8% expected gain)
+- Long-term: Positive trend but high uncertainty (±$30 range)
+- Confidence: High for 30-day, moderate for 365-day
+```
+
+<Warning>
+  **Important Limitations:**
+  - Prophet assumes past patterns will continue (not always true for stocks)
+  - Cannot predict unexpected events (earnings surprises, regulatory changes, etc.)
+  - Confidence intervals widen significantly for long-term predictions
+  - Not financial advice - use as one of many analysis tools
+</Warning>
+
+## Model Configuration
+
+Prophet can be customized with various parameters (currently using defaults):
+
+```python
+# Default configuration (current implementation)
+model = Prophet()
+
+# Advanced configuration (optional enhancements)
+model = Prophet(
+    daily_seasonality=False,      # Stocks don't have daily patterns
+    weekly_seasonality=True,      # Market open/close patterns
+    yearly_seasonality=True,      # Annual cycles
+    changepoint_prior_scale=0.05, # Flexibility of trend changes
+    seasonality_prior_scale=10,   # Strength of seasonality
+)
+```
+
+<Tip>
+  For production use, consider tuning hyperparameters using cross-validation on historical data to optimize prediction accuracy.
+</Tip>
+
+## Technical Requirements
+
+```toml
+# From pyproject.toml:19-21
+prophet = "^1.1.5"
+yfinance = "^0.2.37"
+plotly = "^5.20.0"
+```
+
+## Prediction Accuracy
+
+### Factors Affecting Accuracy
+
+<CardGroup cols={2}>
+  <Card title="Time Horizon" icon="clock">
+    Near-term (1-30 days) typically more accurate than long-term (6-12 months)
+  </Card>
+  <Card title="Market Volatility" icon="wave-pulse">
+    Stable stocks easier to predict than volatile growth stocks
+  </Card>
+  <Card title="Historical Data" icon="database">
+    More history (4+ years) improves trend detection
+  </Card>
+  <Card title="External Events" icon="bullhorn">
+    Unexpected news can invalidate statistical forecasts
+  </Card>
+</CardGroup>
+
+### Validation Approach
+
+To assess model accuracy, you could implement backtesting:
+
+```python
+# Pseudocode for backtesting (not in current implementation)
+def backtest(ticker, train_end, test_end):
+    # Train on historical data
+    df_train = fetch_stock_data(ticker, "2020-01-01", train_end)
+    model = train_prophet_model(df_train)
+    
+    # Predict test period
+    forecast = make_forecast(model, periods=30)
+    
+    # Compare predictions to actual
+    df_test = fetch_stock_data(ticker, train_end, test_end)
+    mape = calculate_error(forecast, df_test)
+    
+    return mape
+```
+
+<Info>
+  Prophet typically achieves **5-15% MAPE** (Mean Absolute Percentage Error) on stock price predictions for 30-day horizons, depending on the stock's volatility.
+</Info>
+
+## Integration Points
+
+The prediction system integrates with:
+
+1. **Conversational AI** (`app.py:128`) - Triggers prediction from user queries
+2. **Sentiment Analysis** (`app.py:130`) - Combines with sentiment for recommendations
+3. **Frontend Visualization** (`App.jsx:44`, `StockHistoryGraph.jsx`) - Displays charts
+4. **Gradio Interface** (`app.py:178`) - Serves predictions via web API
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use as One Signal" icon="layer-group">
+    Combine Prophet forecasts with sentiment, fundamentals, and technical indicators
+  </Card>
+  <Card title="Focus on Short-Term" icon="calendar-day">
+    Trust 1-30 day predictions more than 6-12 month forecasts
+  </Card>
+  <Card title="Monitor Confidence" icon="gauge-high">
+    Wide confidence intervals indicate high uncertainty - be cautious
+  </Card>
+  <Card title="Update Regularly" icon="arrows-rotate">
+    Retrain models with latest data as market conditions change
+  </Card>
+</CardGroup>
+
+## Advanced: Prophet Decomposition
+
+Prophet breaks predictions into components:
+
+```
+Prediction = Trend + Seasonality + Holidays + Error
+
+For AAPL on 2025-06-15:
+  yhat (198.45) = trend (195.10) + seasonal (3.35) + 0 + 0
+```
+
+This decomposition helps understand:
+- **Trend**: Long-term direction (up/down)
+- **Seasonality**: Recurring patterns (e.g., January effect)
+- **Holidays**: Market closures (NYSE holidays)
+
+<Note>
+  The current implementation doesn't explicitly model holidays. Consider adding US market holidays for improved accuracy:
+  ```python
+  from prophet import Prophet
+  model = Prophet(holidays=us_market_holidays)
+  ```
+</Note>
+
+## Related Features
+
+- [Conversational AI](/features/conversational-ai) - Query stocks to trigger predictions
+- [Sentiment Analysis](/features/sentiment-analysis) - Combine sentiment with forecasts
+- [Portfolio Management](/features/portfolio-management) - Use predictions to inform trades

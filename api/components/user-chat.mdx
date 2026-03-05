@@ -1,0 +1,138 @@
+---
+title: "UserChat"
+description: "Interactive chat component for querying the LLM and displaying conversation history"
+---
+
+## Overview
+
+The `UserChat` component provides a conversational interface for users to interact with the LLM. It displays a chat history with user queries and AI responses, and includes a text input area for submitting new queries. When a query is submitted, it triggers the API call to fetch data including LLM responses, stock dataframes, and news articles.
+
+## Import
+
+```jsx
+import UserChat from "./Components/UserChat";
+```
+
+## Props
+
+<ParamField path="displayedResponse" type="string" required>
+  The current AI response to display in the chat. Updated when new responses are received from the API.
+</ParamField>
+
+<ParamField path="setDisplay" type="function" required>
+  Callback function to update the displayed response. Called by `fetchResponse` with the API result.
+</ParamField>
+
+<ParamField path="userQuery" type="string" required>
+  The current user input text in the textarea.
+</ParamField>
+
+<ParamField path="setUserQuery" type="function" required>
+  Callback function to update the user query state as the user types.
+</ParamField>
+
+<ParamField path="fetchResponse" type="function" required>
+  Async function that sends the query to the Gradio backend and updates state. Signature:
+  ```typescript
+  fetchResponse(
+    userQuery: string,
+    setDisplay: Function,
+    setIsReceived: Function,
+    setArticles: Function,
+    setDataframe: Function
+  )
+  ```
+</ParamField>
+
+<ParamField path="setArticles" type="function" required>
+  Callback function to update the articles state with news headlines returned from the API.
+</ParamField>
+
+<ParamField path="setDataframe" type="function" required>
+  Callback function to update the dataframe state with stock data returned from the API.
+</ParamField>
+
+## Internal State
+
+The component manages its own internal state:
+
+- `isReceived` (boolean): Tracks whether a response has been received. Controls the send button icon (SendIcon vs CircularProgress).
+- `responseHistory` (array): Stores all previous query-response pairs as tuples `[userQuery, aiResponse]`.
+
+## Usage Example
+
+```jsx
+import { useState } from "react";
+import UserChat from "./Components/UserChat";
+import { client } from "@gradio/client";
+
+async function fetchResponse(
+  userQuery,
+  setDisplay,
+  setIsReceived,
+  setArticles,
+  setDataframe,
+) {
+  const app = await client("http://127.0.0.1:7860/");
+  const result = await app.predict("/predict", [[userQuery]]);
+  setIsReceived(true);
+  setDisplay(result.data[0]);
+  setDataframe(result.data[1]);
+  setArticles(result.data[2]);
+}
+
+function App() {
+  const [displayedResponse, setDisplay] = useState("");
+  const [userQuery, setUserQuery] = useState("");
+  const [articles, setArticles] = useState("");
+  const [dataframe, setDataframe] = useState({});
+
+  return (
+    <UserChat
+      displayedResponse={displayedResponse}
+      setDisplay={setDisplay}
+      userQuery={userQuery}
+      setUserQuery={setUserQuery}
+      fetchResponse={fetchResponse}
+      setArticles={setArticles}
+      setDataframe={setDataframe}
+    />
+  );
+}
+```
+
+## Component Behavior
+
+### Chat History Display
+
+The component maintains a conversation history in `responseHistory`. Each entry is rendered as:
+- User query: displayed in a teal bubble (`bg-teal-900`) aligned to the start
+- AI response: displayed in a slate bubble (`bg-slate-800`) aligned to the end
+
+Source: `/home/daytona/workspace/source/client/src/Components/UserChat.jsx:38-51`
+
+### Query Submission
+
+When the send button is clicked (`UserChat.jsx:72-84`):
+
+1. Adds a temporary entry to `responseHistory` with the user query
+2. Toggles `isReceived` to `false` to show loading indicator
+3. Calls `fetchResponse` with the query and all state setters
+4. The send button icon changes from `<SendIcon />` to `<CircularProgress />` while loading
+
+### Response Updates
+
+The `useEffect` hook on line 27 watches for changes to `displayedResponse` and appends new responses to the history array.
+
+## Dependencies
+
+- **NextUI**: `Textarea`, `Button`, `Card`, `CardHeader`, `CardBody`, `CardFooter`, `Divider`, `Spacer`, `CircularProgress`
+- **Material-UI Icons**: `SendIcon`
+- **React**: `useState`, `useEffect`
+
+## Styling
+
+- Container has a shadow effect: `shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)]`
+- Chat area uses custom scrollbar styling: `scrollbar-thin scrollbar-track-transparent scrollbar-thumb-cyan-700`
+- Black background with slate-400 text color throughout
+- Responsive text sizing with `text-pretty` for optimal readability

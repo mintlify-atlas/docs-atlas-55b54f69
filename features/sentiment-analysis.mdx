@@ -1,0 +1,303 @@
+---
+title: 'Sentiment Analysis'
+description: 'Real-time news sentiment analysis using transformer models'
+icon: 'face-smile'
+---
+
+## Overview
+
+The Bounce Project analyzes news sentiment to provide data-driven stock recommendations. By scraping recent headlines and processing them through a fine-tuned RoBERTa transformer model, the system quantifies market sentiment as positive, negative, or neutral scores.
+
+## The Sentiment Pipeline
+
+<Steps>
+  <Step title="News Collection">
+    Scrape recent headlines from Business Today for the specific stock
+  </Step>
+  
+  <Step title="Sentiment Scoring">
+    Process each headline through the Cardiff NLP RoBERTa sentiment model
+  </Step>
+  
+  <Step title="Aggregation">
+    Calculate cumulative positive, negative, and neutral scores
+  </Step>
+  
+  <Step title="Recommendation">
+    Generate buy/hold/sell advice based on sentiment thresholds
+  </Step>
+</Steps>
+
+## Sentiment Model
+
+The system uses **CardiffNLP's Twitter-RoBERTa-base** model, specialized for sentiment analysis:
+
+```python
+# From app.py:17-21
+MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
+tokenizer = AutoTokenizer.from_pretrained(MODEL)
+config = AutoConfig.from_pretrained(MODEL)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL)
+```
+
+<Info>
+  **Why RoBERTa?** This model is optimized for short-form text (like news headlines) and achieves state-of-the-art accuracy on sentiment classification tasks.
+</Info>
+
+## News Scraping Process
+
+The system fetches news articles from Business Today using BeautifulSoup:
+
+```python
+# From app.py:78-102
+def fetch_news_sentiment(name):
+    url = f"https://www.businesstoday.in/topic/{name.lower()}"
+    webpage = req.get(url)
+    trav = BS(webpage.content, "html.parser")
+    
+    # Extract all h2 headlines
+    list = []
+    for link in trav.find_all('h2'):
+        list.append(link.string)
+    
+    # Remove irrelevant sections
+    list.remove(None)
+    list.remove("COMPANIES")
+    list.remove("INDICES ANALYSIS")
+    list.remove("MUTUAL FUNDS")
+    list.remove("NEWS")
+    list.remove("AMCs")
+    
+    return list
+```
+
+<Note>
+  The scraper targets Business Today's topic pages, which aggregate all recent articles related to a specific company or stock.
+</Note>
+
+## Sentiment Scoring Algorithm
+
+Each headline is processed through the transformer model to generate three scores:
+
+```python
+# From app.py:103-115
+neg = 0
+pos = 0
+neu = 0
+
+for headline in list:
+    encoded_input = tokenizer(headline, return_tensors='pt')
+    output = model(**encoded_input)
+    scores = output[0][0].detach().numpy()
+    scores = softmax(scores)  # Convert logits to probabilities
+    
+    neg = neg + scores[0]  # Negative score
+    neu = neu + scores[1]  # Neutral score
+    pos = pos + scores[2]  # Positive score
+
+return neg, neu, pos, list
+```
+
+### Understanding Softmax Scores
+
+The model outputs raw logits that are converted to probabilities using softmax:
+
+```python
+from scipy.special import softmax
+
+# Example output:
+# scores = [0.15, 0.25, 0.60]  # [negative, neutral, positive]
+```
+
+Each headline contributes three probability scores (summing to 1.0) that are accumulated across all headlines.
+
+## Sentiment-Based Recommendations
+
+The aggregated scores are normalized and used to generate trading recommendations:
+
+<CodeGroup>
+```python Neutral (Hold)
+# From app.py:136-146
+sum = neg + neu + pos
+neg = neg / sum
+neu = neu / sum
+pos = pos / sum
+
+if neu > 0.55:
+    recommendation = "Stock is stable - HOLD"
+    message = f"The stock {name} is stable currently. "\
+              f"It won't have a lot of positive or negative fluctuations. "\
+              f"You should hold it if you have it but no need to buy on priority."
+```
+
+```python Positive (Buy)
+# From app.py:147-157
+elif pos > neg:
+    recommendation = "Positive momentum - BUY"
+    message = f"The stock {name} has momentum. "\
+              f"Recent trends suggest that the stock is going up and "\
+              f"it is a good time to buy the stock and hold it for a while."
+```
+
+```python Negative (Sell)
+# From app.py:159-169
+else:  # neg > pos
+    recommendation = "Bearish trends - SELL"
+    message = f"The stock {name} is not doing well. "\
+              f"Recent trends suggest that the stock is going down and "\
+              f"it is a good time to sell the stock and not buy it."
+```
+</CodeGroup>
+
+## Decision Logic
+
+The system uses simple thresholds to make recommendations:
+
+| Condition | Sentiment | Action | Reasoning |
+|-----------|-----------|--------|----------|
+| `neu > 0.55` | Neutral-dominant | **HOLD** | Market is stable, no strong signals |
+| `pos > neg` | Positive-dominant | **BUY** | Bullish sentiment, upward momentum |
+| `neg > pos` | Negative-dominant | **SELL** | Bearish sentiment, downward pressure |
+
+<Tip>
+  The 0.55 threshold for neutral sentiment ensures that only clearly neutral stocks (>55% neutral news) get a "hold" recommendation. Otherwise, the system compares positive vs. negative sentiment.
+</Tip>
+
+## Example Analysis
+
+Let's walk through a real analysis for "Tesla":
+
+<Steps>
+  <Step title="Scrape Headlines">
+    System fetches 15 recent Tesla headlines from Business Today:
+    - "Tesla delivers record Q4 vehicles"
+    - "Musk announces new Gigafactory in India"
+    - "Tesla shares drop on supply concerns"
+    - ... (12 more headlines)
+  </Step>
+
+  <Step title="Score Each Headline">
+    RoBERTa processes each:
+    ```
+    Headline 1: [0.05, 0.15, 0.80] → Positive
+    Headline 2: [0.10, 0.20, 0.70] → Positive
+    Headline 3: [0.65, 0.25, 0.10] → Negative
+    ...
+    ```
+  </Step>
+
+  <Step title="Aggregate Scores">
+    ```python
+    total_neg = 3.2
+    total_neu = 4.1
+    total_pos = 7.7
+    
+    # Normalize:
+    neg = 3.2 / 15 = 0.213 (21.3%)
+    neu = 4.1 / 15 = 0.273 (27.3%)
+    pos = 7.7 / 15 = 0.513 (51.3%)
+    ```
+  </Step>
+
+  <Step title="Generate Recommendation">
+    Since `neu < 0.55` and `pos > neg`:
+    
+    ✅ **Recommendation: BUY**
+    
+    "Tesla has momentum. Recent trends suggest that the stock is going up and it is a good time to buy the stock and hold it for a while."
+  </Step>
+</Steps>
+
+## Viewing Sentiment Results
+
+The frontend displays analyzed headlines in the Articles component:
+
+```jsx
+// From Articles.jsx:4-33
+function Articles({ articles }) {
+  return (
+    <Card isPressable isBlurred fullWidth className="bg-black text-white h-48 w-fit opacity-80">
+      <CardHeader>
+        <h3>Trending headlines: </h3>
+      </CardHeader>
+      <Divider />
+      <CardBody>
+        {articles ? (
+          <p>{articles}</p>
+        ) : (
+          <p>Ask a query to generate results</p>
+        )}
+      </CardBody>
+    </Card>
+  );
+}
+```
+
+<Info>
+  The Articles component displays the raw headlines that were analyzed, giving users transparency into what news influenced the recommendation.
+</Info>
+
+## Model Dependencies
+
+The sentiment analysis system requires these Python packages:
+
+```toml
+# From pyproject.toml:14-17
+transformers = "^4.38.2"
+torch = "^2.2.1"
+accelerate = "^0.28.0"
+scipy = "^1.12.0"
+bs4 = "^0.0.2"
+```
+
+## Technical Architecture
+
+<CardGroup cols={2}>
+  <Card title="Web Scraping" icon="globe">
+    **BeautifulSoup 4** extracts headlines from structured HTML
+  </Card>
+  <Card title="Tokenization" icon="scissors">
+    **HuggingFace Tokenizer** converts text to model-ready tensors
+  </Card>
+  <Card title="Inference" icon="brain">
+    **PyTorch** runs the RoBERTa model for classification
+  </Card>
+  <Card title="Post-processing" icon="calculator">
+    **SciPy Softmax** converts logits to interpretable probabilities
+  </Card>
+</CardGroup>
+
+## Limitations & Considerations
+
+<Warning>
+  **Current Limitations:**
+  - Only scrapes from Business Today (single source)
+  - Sentiment is based on headlines only, not full article content
+  - No date filtering - all available headlines are used
+  - Web scraping is brittle and may break if site structure changes
+</Warning>
+
+<Tip>
+  **For Production Use:**
+  - Consider using financial news APIs (NewsAPI, Alpha Vantage)
+  - Add date filtering to focus on recent news (e.g., last 7 days)
+  - Implement caching to avoid repeated scraping
+  - Add error handling for missing or unavailable news
+</Tip>
+
+## Accuracy & Validation
+
+The Cardiff NLP RoBERTa model achieves:
+- **83.4% accuracy** on TweetEval sentiment benchmark
+- **Fine-tuned** on 124M tweets for social media text
+- **Optimized** for short-form content (headlines, tweets)
+
+<Note>
+  While highly accurate for general sentiment, financial news may have domain-specific language that could benefit from fine-tuning on financial corpora.
+</Note>
+
+## Related Features
+
+- [Conversational AI](/features/conversational-ai) - How natural language queries trigger sentiment analysis
+- [Stock Prediction](/features/stock-prediction) - How sentiment combines with forecasts
+- [Portfolio Management](/features/portfolio-management) - Acting on sentiment-based recommendations

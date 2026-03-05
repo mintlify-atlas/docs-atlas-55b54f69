@@ -1,0 +1,437 @@
+---
+title: Installation
+description: 'Detailed installation instructions for The Bounce Project'
+---
+
+## System Requirements
+
+Before installing The Bounce Project, ensure your system meets these requirements:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    Version 18.0 or higher
+  </Card>
+  
+  <Card title="Python" icon="python">
+    Version 3.12 or higher
+  </Card>
+  
+  <Card title="Package Manager" icon="box">
+    pnpm (recommended) or npm
+  </Card>
+  
+  <Card title="Memory" icon="memory">
+    At least 4GB RAM for AI models
+  </Card>
+</CardGroup>
+
+<Note>
+  The project uses large machine learning models. Ensure you have at least 2GB of free disk space for dependencies and model weights.
+</Note>
+
+## Installation Steps
+
+### 1. Clone the Repository
+
+Clone The Bounce Project from GitHub:
+
+```bash
+git clone https://github.com/vineetprash/byteClub_AB05.git
+cd byteClub_AB05
+```
+
+The repository structure looks like this:
+
+```
+byteClub_AB05/
+├── client/          # React frontend
+├── server/          # Python backend
+├── flagged/         # Gradio flagged data
+└── README.md
+```
+
+### 2. Client Installation
+
+The client is a React application built with Vite that provides the user interface.
+
+<Steps>
+  <Step title="Navigate to Client Directory">
+    ```bash
+    cd client
+    ```
+  </Step>
+  
+  <Step title="Install Dependencies">
+    Using pnpm (recommended):
+    ```bash
+    pnpm install
+    ```
+    
+    Or using npm:
+    ```bash
+    npm install
+    ```
+  </Step>
+  
+  <Step title="Verify Installation">
+    Check that all dependencies were installed successfully:
+    ```bash
+    pnpm list
+    ```
+  </Step>
+</Steps>
+
+#### Client Dependencies
+
+The client uses the following key packages:
+
+<CodeGroup>
+```json UI Libraries
+{
+  "@mui/material": "^5.15.13",
+  "@mui/icons-material": "^5.15.13",
+  "@nextui-org/react": "^2.2.10",
+  "framer-motion": "^11.0.14"
+}
+```
+
+```json Charting Libraries
+{
+  "@canvasjs/react-charts": "^1.0.2",
+  "plotly.js-dist-min": "^2.30.1"
+}
+```
+
+```json API Client
+{
+  "@gradio/client": "^0.13.0"
+}
+```
+
+```json React Core
+{
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "react-router-dom": "^6.22.3"
+}
+```
+</CodeGroup>
+
+### 3. Server Installation
+
+The server is a Python application that handles AI model inference, data fetching, and API endpoints.
+
+<Steps>
+  <Step title="Navigate to Server Directory">
+    ```bash
+    cd ../server
+    ```
+  </Step>
+  
+  <Step title="Install with pip">
+    Install the server package and all dependencies:
+    ```bash
+    pip install .
+    ```
+    
+    <Warning>
+      This step will download large machine learning models including PyTorch and Transformers. It may take 10-20 minutes depending on your internet connection.
+    </Warning>
+  </Step>
+  
+  <Step title="Verify Installation">
+    Check that key packages are installed:
+    ```bash
+    pip list | grep -E "gradio|transformers|prophet|yfinance"
+    ```
+  </Step>
+</Steps>
+
+#### Server Dependencies
+
+The server requires these packages defined in `pyproject.toml`:
+
+<CodeGroup>
+```toml AI & ML Libraries
+[tool.poetry.dependencies]
+transformers = "^4.38.2"
+torch = "^2.2.1"
+accelerate = "^0.28.0"
+prophet = "^1.1.5"
+```
+
+```toml Data & Web
+[tool.poetry.dependencies]
+yfinance = "^0.2.37"
+bs4 = "^0.0.2"
+plotly = "^5.20.0"
+scipy = "^1.12.0"
+```
+
+```toml API Framework
+[tool.poetry.dependencies]
+gradio = "^4.21.0"
+fastapi = "^0.110.0"
+starlette = "^0.36.3"
+pydantic = "^2.6.4"
+```
+
+```toml Database
+[tool.poetry.dependencies]
+sqlalchemy = "^2.0.28"
+pathlib = "^1.0.1"
+```
+</CodeGroup>
+
+## Configuration
+
+### Backend Configuration
+
+The backend server (`server/server/app.py`) includes several configurable parameters:
+
+#### API Token Configuration
+
+The system uses EdenAI for natural language generation. Update the token in `app.py:13`:
+
+```python server/server/app.py
+headers = {
+    "Authorization": "Bearer YOUR_EDENAI_TOKEN_HERE"
+}
+```
+
+<Tip>
+  Get your EdenAI token at [https://www.edenai.co/](https://www.edenai.co/). The free tier should be sufficient for testing.
+</Tip>
+
+#### Stock Data Parameters
+
+Modify the date range for historical stock data in `app.py:118-121`:
+
+```python server/server/app.py
+def make_graph(ticker):
+    ticker_symbol = ticker
+    start_date = "2020-01-01"  # Modify start date
+    end_date = "2024-03-01"    # Modify end date
+```
+
+#### Forecast Period
+
+Change the prediction window in `app.py:124`:
+
+```python server/server/app.py
+forecast = make_forecast(model, 365)  # Days to forecast (default: 365)
+```
+
+#### Sentiment Model
+
+The sentiment analysis model is configured in `app.py:17`:
+
+```python server/server/app.py
+MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+tokenizer = AutoTokenizer.from_pretrained(MODEL)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL)
+```
+
+### Frontend Configuration
+
+The frontend connects to the Gradio backend at a configurable URL.
+
+#### Backend URL
+
+If running the backend on a different port or host, update `client/src/App.jsx:20`:
+
+```jsx client/src/App.jsx
+const app = await client("http://127.0.0.1:7860/");
+```
+
+For production deployments, change this to your production backend URL:
+
+```jsx client/src/App.jsx
+const app = await client("https://your-backend-url.com/");
+```
+
+## Running the Application
+
+### Development Mode
+
+<Steps>
+  <Step title="Start Backend Server">
+    In one terminal:
+    ```bash
+    cd server/server
+    python app.py
+    ```
+    
+    Wait for the Gradio server to start:
+    ```
+    Running on local URL:  http://127.0.0.1:7860
+    ```
+  </Step>
+  
+  <Step title="Start Frontend">
+    In another terminal:
+    ```bash
+    cd client
+    pnpm run dev
+    ```
+    
+    The Vite dev server will start:
+    ```
+    ➜  Local:   http://localhost:5173/
+    ```
+  </Step>
+  
+  <Step title="Access Application">
+    Open your browser to `http://localhost:5173`
+  </Step>
+</Steps>
+
+### Production Build
+
+#### Build Frontend
+
+```bash
+cd client
+pnpm run build
+```
+
+This creates an optimized production build in `client/dist/`.
+
+#### Preview Production Build
+
+```bash
+pnpm run preview
+```
+
+<Info>
+  For production deployment, serve the `dist/` folder using a static file server like Nginx or deploy to platforms like Vercel or Netlify.
+</Info>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="PyTorch Installation Issues">
+    If PyTorch fails to install, try installing it separately first:
+    
+    ```bash
+    # For CPU-only (smaller download)
+    pip install torch --index-url https://download.pytorch.org/whl/cpu
+    
+    # Then install the server package
+    pip install .
+    ```
+    
+    For GPU support, visit [PyTorch's official installation guide](https://pytorch.org/get-started/locally/).
+  </Accordion>
+  
+  <Accordion title="Prophet Installation Errors">
+    Prophet requires additional system dependencies. On Ubuntu/Debian:
+    
+    ```bash
+    sudo apt-get install python3-dev
+    sudo apt-get install build-essential
+    ```
+    
+    On macOS:
+    ```bash
+    brew install gcc
+    ```
+  </Accordion>
+  
+  <Accordion title="pnpm Not Found">
+    Install pnpm globally:
+    
+    ```bash
+    npm install -g pnpm
+    ```
+    
+    Or use npm instead throughout the installation.
+  </Accordion>
+  
+  <Accordion title="Port Already in Use">
+    If port 7860 (backend) or 5173 (frontend) is already in use:
+    
+    **Backend**: Gradio will automatically try the next available port. Check the console output for the actual URL.
+    
+    **Frontend**: Specify a different port:
+    ```bash
+    pnpm run dev -- --port 3000
+    ```
+  </Accordion>
+  
+  <Accordion title="CORS Issues">
+    If you encounter CORS errors when the frontend connects to the backend, ensure both servers are running and the backend URL in `App.jsx` matches the actual Gradio server address.
+  </Accordion>
+  
+  <Accordion title="Model Download Timeouts">
+    If Hugging Face model downloads timeout:
+    
+    ```bash
+    # Increase timeout
+    export HF_HUB_DOWNLOAD_TIMEOUT=300
+    
+    # Then retry installation
+    pip install .
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Project Structure
+
+Understanding the project structure helps with customization:
+
+```
+byteClub_AB05/
+├── client/
+│   ├── src/
+│   │   ├── Components/
+│   │   │   ├── UserChat.jsx       # Chat interface
+│   │   │   ├── Articles.jsx       # News headlines display
+│   │   │   ├── StockHistoryGraph.jsx  # Chart component
+│   │   │   └── NavBar.jsx         # Navigation
+│   │   ├── App.jsx                # Main app component
+│   │   └── main.jsx               # Entry point
+│   ├── package.json               # Dependencies
+│   └── vite.config.js             # Vite configuration
+│
+├── server/
+│   ├── server/
+│   │   ├── app.py                 # Main backend logic
+│   │   ├── main.py                # Additional entry point
+│   │   └── __init__.py
+│   └── pyproject.toml             # Python dependencies
+│
+└── README.md
+```
+
+## Key Files Reference
+
+| File | Purpose | Line References |
+|------|---------|----------------|
+| `client/src/App.jsx` | Frontend main component, API calls | Lines 11-38: fetchResponse function |
+| `client/src/Components/UserChat.jsx` | Chat UI and user input | Lines 72-84: Send button handler |
+| `server/server/app.py` | Backend API, AI models, data fetching | Lines 26-44: Stock data functions |
+| `server/server/app.py` | Sentiment analysis | Lines 78-115: News scraping & sentiment |
+| `server/server/app.py` | Main prediction logic | Lines 128-175: main() function |
+| `server/pyproject.toml` | Python dependencies | Lines 8-23: All packages |
+| `client/package.json` | Node.js dependencies | Lines 12-24: All packages |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Make your first stock query in 5 minutes
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Learn about the Gradio API endpoints
+  </Card>
+  
+  <Card title="Core Features" icon="sparkles" href="/features/conversational-ai">
+    Explore the AI-powered features
+  </Card>
+  
+  <Card title="User Guide" icon="book-open" href="/guide/authentication">
+    Learn how to use The Bounce Project
+  </Card>
+</CardGroup>

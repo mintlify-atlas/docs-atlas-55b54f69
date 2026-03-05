@@ -1,0 +1,283 @@
+---
+title: Making Queries
+description: Learn how to ask questions and get AI-powered stock recommendations
+icon: 'message-question'
+---
+
+The Bounce Project uses advanced natural language processing to understand your stock-related questions and provide intelligent recommendations.
+
+## How Queries Work
+
+When you submit a query, The Bounce Project:
+
+1. **Extracts Stock Information**: Identifies which stock you're asking about using AI text generation
+2. **Fetches Real-time News**: Gathers recent headlines and articles about the stock
+3. **Analyzes Sentiment**: Performs sentiment analysis on news articles using a RoBERTa-based model
+4. **Generates Predictions**: Creates price forecasts using Facebook Prophet model
+5. **Provides Recommendations**: Delivers actionable insights based on combined analysis
+
+<Info>
+  The system uses the `cardiffnlp/twitter-roberta-base-sentiment-latest` model for sentiment analysis, trained specifically for understanding financial market sentiment.
+</Info>
+
+## Using the Query Interface
+
+The chat interface is your primary way to interact with The Bounce Project:
+
+<Steps>
+  <Step title="Type Your Query">
+    Enter your question in the text area at the bottom of the chat interface. The input field supports natural language questions.
+  </Step>
+  
+  <Step title="Send Your Message">
+    Click the send icon or press Enter to submit your query. A loading indicator will appear while the AI processes your request.
+  </Step>
+  
+  <Step title="Review Results">
+    The AI's response appears in the chat window, along with supporting visualizations and news articles.
+  </Step>
+</Steps>
+
+## Query Examples
+
+### Good Query Examples
+
+These natural language queries work well with The Bounce Project:
+
+<CodeGroup>
+
+```text Direct Stock Questions
+"Should I invest in Apple?"
+"Tell me about Google stock"
+"What's happening with Microsoft?"
+"Is Tesla a good buy right now?"
+```
+
+```text Company Name Queries
+"How is Amazon performing?"
+"Give me information about Netflix"
+"What do you think about Meta?"
+"Should I buy Nvidia stock?"
+```
+
+```text Market Sentiment Queries
+"What's the sentiment on Apple?"
+"Is Google stock trending up or down?"
+"How is the market viewing Tesla?"
+```
+
+</CodeGroup>
+
+<Tip>
+  **Pro Tip**: You can reference companies by their common names ("Apple", "Google") or ticker symbols ("AAPL", "GOOGL"). The AI understands both formats.
+</Tip>
+
+### What the AI Understands
+
+The stock extraction system uses this prompt internally:
+
+```python AI Stock Identification Prompt
+text = ("I will provide a sentence enclosed in square brackets '[ ]'."
+        " The sentence will pertain to a stock in the stock market."
+        " Your task is to identify the mentioned stock and return its ticker symbol."
+        " Present the name of the stock along with its ticker symbol in the format 'stock_name: ticker_symbol'."
+        " For example, if the stock mentioned is 'Apple', then the output should be 'Apple: AAPL'."
+        "The sentence is: "
+        )
+```
+
+This means the AI can extract stock information from various natural language formats.
+
+## Query Processing Flow
+
+Here's what happens when you submit a query:
+
+```javascript Client-Side Processing (App.jsx)
+async function fetchResponse(
+  userQuery,
+  setDisplay,
+  setIsReceived,
+  setArticles,
+  setDataframe,
+) {
+  try {
+    console.log("You entered", userQuery);
+    
+    // Connect to Gradio backend
+    const app = await client("http://127.0.0.1:7860/");
+    
+    // Send prediction request
+    const result = await app.predict("/predict", [[`${userQuery}`]]);
+    
+    // Process results:
+    setDisplay(result.data[0]);      // AI recommendation text
+    setDataframe(result.data[1]);    // Stock price forecast data
+    setArticles(result.data[2]);     // News headlines
+    
+    setIsReceived(true);
+  } catch (error) {
+    console.log("Error handled: ", error);
+  }
+}
+```
+
+<Steps>
+  <Step title="Stock Identification">
+    The AI extracts the stock name and ticker symbol from your query.
+    
+    ```python
+    name, ticker = fetch_stock_name(prompt)
+    # Example: "Apple", "AAPL"
+    ```
+  </Step>
+  
+  <Step title="News Sentiment Analysis">
+    The system fetches recent news headlines and analyzes sentiment scores.
+    
+    ```python
+    neg, neu, pos, news = fetch_news_sentiment(name)
+    # Returns negative, neutral, positive sentiment scores
+    ```
+  </Step>
+  
+  <Step title="Price Prediction">
+    Facebook Prophet generates a 365-day forecast based on historical data.
+    
+    ```python
+    forecast = make_graph(ticker)
+    # Creates forecast dataframe with predicted prices
+    ```
+  </Step>
+  
+  <Step title="Recommendation Generation">
+    AI generates a natural language recommendation based on sentiment analysis.
+  </Step>
+</Steps>
+
+## Response Format
+
+You'll receive three types of information for each query:
+
+<CardGroup cols={3}>
+  <Card title="AI Recommendation" icon="robot">
+    Natural language explanation of whether to buy, hold, or sell the stock based on sentiment analysis.
+  </Card>
+  
+  <Card title="Price Forecast" icon="chart-line">
+    Interactive graph showing historical prices and 365-day predictions.
+  </Card>
+  
+  <Card title="News Headlines" icon="newspaper">
+    Recent trending headlines related to the stock from BusinessToday.in.
+  </Card>
+</CardGroup>
+
+## Conversation History
+
+The chat interface maintains your query history during your session:
+
+```jsx Query History Display
+{responseHistory &&
+  responseHistory.map((element, index) => {
+    return (
+      <div key={index}>
+        <div className="user-chat-bubble">
+          {element[0]}  {/* Your query */}
+        </div>
+        <div className="ai-chat-bubble">
+          {element[1]}  {/* AI response */}
+        </div>
+      </div>
+    );
+  })}
+```
+
+<Note>
+  Your conversation history is maintained for the duration of your session. You can scroll through previous queries and responses in the chat window.
+</Note>
+
+## Supported Stock Markets
+
+The Bounce Project uses **Yahoo Finance** (`yfinance`) as its data source, which means it supports:
+
+- US Stock Markets (NYSE, NASDAQ)
+- International exchanges
+- Major global companies
+
+<Warning>
+  Ensure you're querying stocks that are available on Yahoo Finance. Obscure or delisted stocks may not return results.
+</Warning>
+
+## Query Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Be Specific" icon="crosshairs">
+    Mention the company name or ticker symbol clearly in your query.
+  </Card>
+  
+  <Card title="Use Common Names" icon="building">
+    Reference companies by their well-known names ("Apple" not "Apple Inc.")
+  </Card>
+  
+  <Card title="One Stock at a Time" icon="1">
+    Focus on one stock per query for best results.
+  </Card>
+  
+  <Card title="Natural Language" icon="comment">
+    Write naturally - the AI understands conversational questions.
+  </Card>
+</CardGroup>
+
+## Technical Implementation
+
+For developers interested in the backend processing:
+
+```python Main Query Processing (app.py)
+def main(prompt):
+    # Extract stock information
+    name, ticker = fetch_stock_name(prompt)
+    
+    # Analyze news sentiment
+    neg, neu, pos, news = fetch_news_sentiment(name)
+    sum = neg + neu + pos
+    neg = neg / sum
+    neu = neu / sum
+    pos = pos / sum
+    
+    # Generate recommendation based on sentiment
+    if neu > 0.55:
+        # Stock is stable - hold recommendation
+    elif pos > neg:
+        # Stock has momentum - buy recommendation
+    else:
+        # Stock declining - sell recommendation
+    
+    # Generate forecast
+    graph = make_graph(ticker)
+    
+    return result, graph, news
+```
+
+<Tip>
+  The sentiment threshold of 0.55 for neutral sentiment is calibrated to avoid false positives. Adjust your expectations based on current market volatility.
+</Tip>
+
+## Troubleshooting Queries
+
+<AccordionGroup>
+  <Accordion title="No results returned">
+    Ensure the stock ticker exists on Yahoo Finance and the company name is spelled correctly.
+  </Accordion>
+  
+  <Accordion title="Incorrect stock identified">
+    Try using the exact ticker symbol (e.g., "AAPL") instead of the company name if there's ambiguity.
+  </Accordion>
+  
+  <Accordion title="Loading takes too long">
+    The system fetches real-time news and processes sentiment analysis, which can take 10-30 seconds. Be patient while the AI analyzes the data.
+  </Accordion>
+  
+  <Accordion title="Connection error">
+    Ensure the Gradio backend is running on http://127.0.0.1:7860/ and your network connection is stable.
+  </Accordion>
+</AccordionGroup>

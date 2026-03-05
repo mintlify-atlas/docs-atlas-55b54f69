@@ -1,0 +1,120 @@
+---
+title: "Articles"
+description: "Component for displaying trending news headlines related to stock queries"
+---
+
+## Overview
+
+The `Articles` component displays trending news headlines in a card interface. It receives article data from the backend API and presents it in a styled NextUI Card component. When no data is available, it shows a placeholder message prompting the user to submit a query.
+
+## Import
+
+```jsx
+import Articles from "./Components/Articles";
+```
+
+## Props
+
+<ParamField path="articles" type="string">
+  A string containing news headlines returned from the API. This is populated by the third element of the API response (`result.data[2]`). When `null`, `undefined`, or empty, the component displays a placeholder message.
+</ParamField>
+
+## Usage Example
+
+```jsx
+import { useState } from "react";
+import Articles from "./Components/Articles";
+
+function App() {
+  const [articles, setArticles] = useState("");
+
+  // articles gets populated by the API response
+  // result.data[2] contains the news headlines
+
+  return (
+    <div>
+      <Articles articles={articles} />
+    </div>
+  );
+}
+```
+
+## Component Structure
+
+The component renders a NextUI Card with:
+- **CardHeader**: Displays the title "Trending headlines:"
+- **Divider**: Separates header from content
+- **CardBody**: Shows either the articles string or a placeholder message
+
+Source: `/home/daytona/workspace/source/client/src/Components/Articles.jsx:9-26`
+
+## Conditional Rendering
+
+The component uses a ternary operator to determine what content to display:
+
+```jsx
+{articles ? (
+  <p>{articles}</p>
+) : (
+  <p>Ask a query to generate results</p>
+)}
+```
+
+- **If articles exist**: Displays the articles string directly
+- **If articles is empty/null**: Shows "Ask a query to generate results"
+
+Source: `/home/daytona/workspace/source/client/src/Components/Articles.jsx:20-24`
+
+## Card Configuration
+
+The NextUI Card is configured with:
+- `isPressable`: Makes the card interactive (clickable)
+- `isBlurred`: Applies a blur effect to the card background
+- `fullWidth`: Stretches to fill the parent container width
+- `className`: Custom styling for appearance
+
+```jsx
+<Card
+  isPressable
+  isBlurred
+  fullWidth
+  className="bg-black text-white h-48 w-fit opacity-80"
+>
+```
+
+## Data Flow
+
+In the application context (`App.jsx:11-38`):
+
+1. User submits a query via `UserChat` component
+2. `fetchResponse` function calls the Gradio backend at `http://127.0.0.1:7860/`
+3. API returns an array where `result.data[2]` contains article headlines
+4. `setArticles(result.data[2])` updates the articles state
+5. Articles component re-renders with new headline data
+
+## Dependencies
+
+- **NextUI**: `Card`, `CardBody`, `CardHeader`, `Divider`
+- **React**: Core library
+
+## Styling
+
+- Outer container: `flex flex-col text-white m-4`
+- Inner wrapper: `flex flex-row gap-3 w-full h-full justify-center items-center`
+- Card dimensions: Fixed height of `h-48` (192px)
+- Card appearance: Black background (`bg-black`), white text, 80% opacity, with blur effect
+
+## Integration
+
+In the main app layout (`App.jsx:61-63`), the Articles component is positioned in the top section of the supporting data column:
+
+```jsx
+<div id="supportingData" className="flex flex-col h-full w-1/2">
+  <div id="1" className="flex h-1/2 m-4">
+    <Articles articles={articles} />
+  </div>
+  {/* StockHistoryGraph below */}
+</div>
+```
+
+It occupies the upper half of the left panel, with the stock graph positioned below it.

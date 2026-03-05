@@ -1,0 +1,217 @@
+---
+title: 'Conversational AI'
+description: 'Natural language stock queries powered by AI'
+icon: 'messages'
+---
+
+## Overview
+
+The Bounce Project features an intelligent conversational AI system that allows users to ask questions about stocks in natural language. The system automatically extracts stock information, analyzes sentiment, and generates predictions—all from a simple text query.
+
+## How It Works
+
+The conversational AI pipeline consists of three main stages:
+
+<Steps>
+  <Step title="Query Understanding">
+    When you submit a query, the system uses OpenAI/Cohere models via EdenAI to parse your natural language input and extract the stock ticker symbol.
+    
+    **Example queries:**
+    - "How is Apple doing?"
+    - "What about Tesla stock?"
+    - "Tell me about Microsoft"
+  </Step>
+
+  <Step title="Data Collection">
+    Once the stock is identified, the system fetches:
+    - Historical price data from Yahoo Finance
+    - Recent news articles from Business Today
+    - Sentiment scores from news headlines
+  </Step>
+
+  <Step title="Response Generation">
+    The AI generates a natural language recommendation based on sentiment analysis and market trends, presented in an easy-to-understand format.
+  </Step>
+</Steps>
+
+## Making a Query
+
+The chat interface in the web application allows you to type questions in plain English:
+
+```jsx
+// From UserChat.jsx - The chat input component
+<Textarea
+  disableAutosize
+  radius="sm"
+  variant="underlined"
+  placeholder="Type your query..."
+  className="w-full h-max right text-white caret-teal-700"
+  onChange={(e) => setUserQuery(e.target.value)}
+/>
+```
+
+### Example Query Flow
+
+Here's what happens when you ask: **"Should I invest in Apple?"**
+
+<Steps>
+  <Step title="Stock Identification">
+    The system uses a prompt-based extraction method:
+    
+    ```python
+    # From app.py:45-74
+    def fetch_stock_name(prompt):
+        text = ("I will provide a sentence enclosed in square brackets '[ ]'."
+                " The sentence will pertain to a stock in the stock market."
+                " Your task is to identify the mentioned stock and return its ticker symbol."
+                " Present the name of the stock along with its ticker symbol in the format 'stock_name: ticker_symbol'."
+                " For example, if the stock mentioned is 'Apple', then the output should be 'Apple: AAPL'.")
+        
+        payload = {
+            "providers": "openai,cohere",
+            "text": text + prompt,
+            "temperature": 0.2,
+            "max_tokens": 250
+        }
+        response = requests.post(url, json=payload, headers=headers)
+        result = json.loads(response.text)
+        name = result['openai']['generated_text'].split(":")[0].strip()
+        ticker = result['openai']['generated_text'].split(":")[1].strip()
+        return name, ticker
+    ```
+    
+    **Output:** `name = "Apple"`, `ticker = "AAPL"`
+  </Step>
+
+  <Step title="Sentiment & Prediction Analysis">
+    The system analyzes news sentiment and generates price forecasts (detailed in other sections).
+  </Step>
+
+  <Step title="Natural Language Response">
+    Based on sentiment scores, the AI generates contextual recommendations:
+    
+    ```python
+    # From app.py:136-169
+    if neu > 0.55:
+        # Stock is stable - hold recommendation
+        text = f"Generate a sentence which tells me that the stock {name} is stable..."
+    elif pos > neg:
+        # Positive momentum - buy recommendation
+        text = f"Generate a sentence which tells me that the stock {name} has momentum..."
+    else:
+        # Negative trends - sell recommendation
+        text = f"Generate a sentence which tells me that the stock {name} is not doing well..."
+    ```
+  </Step>
+</Steps>
+
+## Response Format
+
+The system returns three types of information:
+
+<CardGroup cols={3}>
+  <Card title="AI Recommendation" icon="sparkles">
+    Natural language advice on whether to buy, hold, or sell
+  </Card>
+  <Card title="Price Forecast" icon="chart-line">
+    Prophet-generated predictions for the next 365 days
+  </Card>
+  <Card title="News Headlines" icon="newspaper">
+    Recent articles analyzed for sentiment
+  </Card>
+</CardGroup>
+
+## Chat Interface
+
+The web interface displays conversation history with a clean chat bubble design:
+
+```jsx
+// From UserChat.jsx:38-51
+{responseHistory && responseHistory.map((element, index) => {
+  return (
+    <div key={index}>
+      <div className="text-start m-1 p-3 bg-teal-900 user-chat-bubble">
+        {element[0]}  {/* User query */}
+      </div>
+      <div className="text-end m-1 p-3 bg-slate-800 ai-chat-bubble">
+        {element[1]}  {/* AI response */}
+      </div>
+    </div>
+  );
+})}
+```
+
+<Info>
+  The chat interface maintains conversation history, allowing you to ask multiple stock queries in the same session.
+</Info>
+
+## Integration with Backend
+
+The frontend communicates with the Gradio-powered backend:
+
+```javascript
+// From App.jsx:11-38
+async function fetchResponse(userQuery, setDisplay, setIsReceived, setArticles, setDataframe) {
+  try {
+    const app = await client("http://127.0.0.1:7860/");
+    const result = await app.predict("/predict", [[`${userQuery}`]]);
+    
+    // result.data[0] = AI recommendation text
+    // result.data[1] = Price forecast dataframe
+    // result.data[2] = News articles
+    
+    setDisplay(result.data[0]);
+    setDataframe(result.data[1]);
+    setArticles(result.data[2]);
+    setIsReceived(true);
+  } catch (error) {
+    console.log("Error handled: ", error);
+  }
+}
+```
+
+## AI Models Used
+
+The conversational AI leverages multiple models:
+
+| Model | Purpose | Provider |
+|-------|---------|----------|
+| OpenAI GPT | Stock name extraction & response generation | EdenAI |
+| Cohere | Fallback for text generation | EdenAI |
+| RoBERTa | Sentiment analysis | Cardiff NLP |
+| Prophet | Price forecasting | Meta (Facebook) |
+
+<Tip>
+  The system uses a temperature of 0.2 for stock extraction (precise) and 0.9 for response generation (creative and natural).
+</Tip>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Be Specific" icon="bullseye">
+    Mention the company name or ticker clearly: "How is Tesla?" works better than "electric car company"
+  </Card>
+  <Card title="One Stock at a Time" icon="1">
+    The current implementation processes one stock per query for optimal analysis
+  </Card>
+  <Card title="Wait for Results" icon="clock">
+    Analysis takes 10-30 seconds as it fetches real-time data and runs ML models
+  </Card>
+  <Card title="Review All Outputs" icon="eye">
+    Check the AI recommendation, forecast chart, and news headlines for complete context
+  </Card>
+</CardGroup>
+
+## Limitations
+
+<Warning>
+  - The system requires an active EdenAI API token (configured in `app.py:13`)
+  - Stock name extraction works best with well-known companies
+  - Response quality depends on availability of recent news articles
+</Warning>
+
+## Related Features
+
+- [Sentiment Analysis](/features/sentiment-analysis) - How news sentiment influences recommendations
+- [Stock Prediction](/features/stock-prediction) - Understanding the Prophet forecasting model
+- [Portfolio Management](/features/portfolio-management) - Track your investments

@@ -1,0 +1,106 @@
+---
+title: 'API Overview'
+description: 'Introduction to The Bounce Project Backend API'
+---
+
+## Introduction
+
+The Bounce Project Backend API is a FastAPI-based REST API that provides stock market analysis, portfolio management, and AI-powered investment recommendations through natural language processing.
+
+## Base URL
+
+```
+http://localhost:8000
+```
+
+For production deployments, replace with your deployed server URL.
+
+## Authentication
+
+The API uses token-based authentication with encrypted timestamps. After signing in, you'll receive a token that must be included as a URL parameter for all protected endpoints.
+
+**Token Format:** Encrypted timestamp string using Fernet encryption
+
+**Token Validity:** 1 hour from generation
+
+**Token Usage:** Include as a query parameter: `?token={your_token}`
+
+<Warning>
+  Tokens expire after 1 hour. You'll need to sign in again to obtain a new token.
+</Warning>
+
+## Available Endpoints
+
+### Authentication
+
+- **POST** `/signup/` - Create a new user account
+- **POST** `/signin/` - Sign in and receive authentication token
+
+### Stock Operations (Requires Token)
+
+- **POST** `/buyStock/` - Purchase stock for your portfolio
+- **POST** `/sellstock/` - Sell stock from your portfolio
+- **POST** `/showstocklist/` - View your current stock holdings
+- **POST** `/stockcard/` - Get detailed stock information and forecasts
+
+### AI Chat Analysis
+
+- **Gradio Interface** - Natural language stock analysis via Gradio client
+- **GET** `/chat/` - Chat endpoint (implementation in progress)
+
+## Response Format
+
+All API responses are returned in JSON format:
+
+```json
+{
+  "message": "Response message",
+  "token": "encrypted_token_string" // Only for signin
+}
+```
+
+## Error Handling
+
+The API uses standard HTTP status codes:
+
+- **200** - Success
+- **403** - Forbidden (invalid or expired token)
+- **500** - Server error
+
+Error responses include a detail message:
+
+```json
+{
+  "detail": "forbidden action pls login"
+}
+```
+
+## CORS Configuration
+
+The API is configured with permissive CORS settings for development:
+
+- **Allowed Origins:** `*` (all origins)
+- **Allowed Methods:** `GET`, `POST`, `PUT`, `DELETE`
+- **Allowed Headers:** `*` (all headers)
+
+<Note>
+  For production deployments, restrict CORS origins to your specific frontend domain.
+</Note>
+
+## Rate Limiting
+
+Currently, there are no rate limits enforced. Consider implementing rate limiting for production use.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/api/authentication">
+    Learn how to sign up and authenticate
+  </Card>
+  <Card title="Stock Operations" icon="chart-line" href="/api/stock-operations">
+    Manage your stock portfolio
+  </Card>
+  <Card title="Chat Endpoint" icon="message" href="/api/chat-endpoint">
+    Get AI-powered stock insights
+  </Card>
+</CardGroup>

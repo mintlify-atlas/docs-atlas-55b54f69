@@ -1,0 +1,129 @@
+---
+title: Introduction
+description: 'AI-powered conversational stock recommendation system with predictive analytics and sentiment analysis'
+---
+
+## Welcome to The Bounce Project
+
+The Bounce Project is an intelligent conversational recommendation system that helps stock market investors make informed investment decisions through natural language interactions. Built with React and Python, it combines AI-powered sentiment analysis, predictive modeling, and real-time market data to provide comprehensive stock insights.
+
+<Info>
+  **Important Disclaimer**: This tool provides analysis and recommendations based on historical data and sentiment analysis. Users should not blindly follow the recommendations before making any financial decisions. It only provides a high possibility of future trends.
+</Info>
+
+## What Makes The Bounce Project Unique?
+
+Stock market investors often face the challenge of navigating vast amounts of information to make sound and timely investment decisions. The Bounce Project simplifies this process by:
+
+<CardGroup cols={2}>
+  <Card title="Natural Language Interface" icon="message">
+    Communicate with the system in fluent natural language about investing decisions and receive conversational recommendations
+  </Card>
+  
+  <Card title="Predictive Analytics" icon="chart-line">
+    Advanced forecasting using Facebook Prophet to predict future stock price trends based on historical data
+  </Card>
+  
+  <Card title="Sentiment Analysis" icon="brain">
+    Real-time news sentiment analysis using CardiffNLP's Twitter RoBERTa model to gauge market sentiment
+  </Card>
+  
+  <Card title="Visual Insights" icon="chart-mixed">
+    Interactive graphical representations of stock prices with future growth predictions and trending headlines
+  </Card>
+</CardGroup>
+
+## How It Works
+
+The Bounce Project analyzes stocks through a three-pronged approach:
+
+<Steps>
+  <Step title="Natural Language Processing">
+    Ask questions about stocks in plain English (e.g., "Should I invest in Apple?")
+  </Step>
+  
+  <Step title="Data Aggregation">
+    The system fetches:
+    - Historical stock data via Yahoo Finance
+    - Recent news headlines from Business Today
+    - Sentiment scores from news analysis
+  </Step>
+  
+  <Step title="AI-Powered Analysis">
+    Multiple AI models work together:
+    - **Stock identification**: Extracts ticker symbols from your query
+    - **Sentiment analysis**: Analyzes news headlines for positive, negative, or neutral sentiment
+    - **Price prediction**: Forecasts future prices using Prophet time-series modeling
+  </Step>
+  
+  <Step title="Actionable Recommendations">
+    Receive clear recommendations:
+    - **Buy**: Stock has positive momentum
+    - **Hold**: Stock is stable with no major fluctuations
+    - **Sell**: Stock shows negative trends
+  </Step>
+</Steps>
+
+## Who Is This For?
+
+<CardGroup cols={3}>
+  <Card title="Individual Investors" icon="user">
+    Make informed decisions with AI-powered insights
+  </Card>
+  
+  <Card title="Day Traders" icon="clock">
+    Quickly analyze sentiment and trends for multiple stocks
+  </Card>
+  
+  <Card title="Financial Analysts" icon="magnifying-glass-chart">
+    Supplement research with automated sentiment analysis
+  </Card>
+</CardGroup>
+
+## Key Features
+
+### Conversational AI Interface
+
+Interact naturally with the system using the chat interface powered by Gradio backend and React frontend. Simply type your investment question and receive comprehensive analysis.
+
+### Real-Time News Sentiment
+
+The system scrapes and analyzes recent news headlines related to your stock query, using transformer-based sentiment analysis to determine market perception:
+
+- **Positive sentiment**: Indicates growing confidence and upward momentum
+- **Neutral sentiment**: Suggests stability with minimal volatility
+- **Negative sentiment**: Signals caution and potential downward trends
+
+### Predictive Stock Charts
+
+Visualize historical performance and predicted future trends using Prophet forecasting models trained on years of stock data. The interactive Plotly charts show:
+
+- Historical closing prices from 2020 onwards
+- 365-day future price predictions
+- Confidence intervals for forecasts
+
+### Trending Headlines
+
+Stay informed with automatically fetched news headlines relevant to your stock query, providing context for the AI's recommendations.
+
+## Technology Stack
+
+The Bounce Project leverages modern technologies:
+
+**Frontend**:
+- React 18 with Vite for fast development
+- Material-UI and NextUI for polished components
+- Plotly and CanvasJS for interactive charts
+- Gradio Client for API communication
+
+**Backend**:
+- Python 3.12+ with FastAPI
+- Gradio for API server interface
+- Transformers (Hugging Face) for NLP
+- Prophet for time-series forecasting
+- yFinance for stock data
+- BeautifulSoup for web scraping
+
+<Note>
+  Ready to get started? Check out the [Quickstart Guide](/quickstart) to make your first stock query in under 5 minutes.
+</Note>

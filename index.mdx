@@ -1,97 +1,112 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "The Bounce Project"
+description: "AI-powered conversational stock recommendations with sentiment analysis and price prediction"
 ---
 
-## Setting up
+<div style={{
+  background: 'linear-gradient(135deg, #040404 0%, #b95676 100%)',
+  padding: '60px 40px',
+  borderRadius: '20px',
+  color: '#ffffff',
+  marginBottom: '40px'
+}}>
+  <h1 style={{fontSize: '48px', fontWeight: '700', marginBottom: '20px', color: '#ffffff'}}>
+    Smart Investment Decisions, Powered by AI
+  </h1>
+  <p style={{fontSize: '20px', marginBottom: '30px', color: '#ffffff', opacity: 0.9}}>
+    Navigate the stock market with confidence using natural language queries, real-time sentiment analysis, and AI-powered price predictions.
+  </p>
+  <div style={{display: 'flex', gap: '15px', flexWrap: 'wrap'}}>
+    <a href="/quickstart" style={{
+      background: '#007aff',
+      color: '#ffffff',
+      padding: '12px 28px',
+      borderRadius: '20px',
+      textDecoration: 'none',
+      fontWeight: '600',
+      display: 'inline-block'
+    }}>
+      Get Started
+    </a>
+    <a href="https://github.com/vineetprash/byteClub_AB05" style={{
+      background: 'transparent',
+      color: '#ffffff',
+      padding: '12px 28px',
+      borderRadius: '20px',
+      textDecoration: 'none',
+      fontWeight: '600',
+      border: '2px solid #ffffff',
+      display: 'inline-block'
+    }}>
+      View on GitHub
+    </a>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+## Key Features
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+The Bounce Project combines cutting-edge AI technologies to help stock market investors make informed decisions through natural conversation.
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Conversational AI" icon="comments" href="/features/conversational-ai">
+    Ask questions about stocks in natural language and get intelligent recommendations
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Sentiment Analysis" icon="brain" href="/features/sentiment-analysis">
+    Real-time analysis of financial news headlines using AI sentiment models
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Price Prediction" icon="chart-line" href="/features/stock-prediction">
+    ML-powered forecasts using Prophet to predict future stock prices
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Portfolio Management" icon="wallet" href="/features/portfolio-management">
+    Track your investments and manage your stock portfolio
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## How It Works
 
-Everything you need to create world-class documentation.
+<Steps>
+  <Step title="Ask in Natural Language">
+    Simply type your question about any stock in plain English, like "Should I invest in Apple?"
+  </Step>
+  <Step title="AI Analyzes Market Data">
+    The system extracts the stock ticker, fetches news headlines, and analyzes sentiment using AI models
+  </Step>
+  <Step title="Get Predictions & Recommendations">
+    View price forecasts, sentiment analysis, and conversational recommendations to guide your decision
+  </Step>
+  <Step title="Visualize Insights">
+    See interactive graphs showing historical prices and future predictions
+  </Step>
+</Steps>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Quick Start
 
-## Need inspiration?
+Get up and running with The Bounce Project in minutes.
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Set up the client and server components
+  </Card>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Make your first stock query in under 5 minutes
+  </Card>
+  <Card title="User Guide" icon="book-open" href="/guide/authentication">
+    Learn how to use all features effectively
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore the backend API and frontend components
+  </Card>
+</CardGroup>
+
+## Technology Stack
+
+Built with modern technologies for performance and scalability:
+
+- **Frontend**: React + Vite, Material UI, NextUI, Plotly.js
+- **Backend**: Python with Gradio API server
+- **AI/ML**: Transformers (sentiment analysis), Prophet (forecasting)
+- **Data**: yfinance for stock data, web scraping for news
+
+<Warning>
+  The Bounce Project provides AI-powered recommendations based on sentiment analysis and historical data. Always conduct your own research and consult with financial advisors before making investment decisions.
+</Warning>

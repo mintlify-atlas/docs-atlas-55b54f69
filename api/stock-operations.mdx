@@ -1,0 +1,402 @@
+---
+title: 'Stock Operations'
+description: 'Manage your stock portfolio with buy, sell, and view operations'
+---
+
+## Overview
+
+The stock operations endpoints allow users to manage their investment portfolio. All endpoints require a valid authentication token.
+
+<Warning>
+  All stock operation endpoints require a valid token. See [Authentication](/api/authentication) for details.
+</Warning>
+
+## Buy Stock
+
+Purchase a stock and add it to your portfolio.
+
+### Endpoint
+
+```
+POST /buyStock/?token={your_token}
+```
+
+### Query Parameters
+
+<ParamField query="token" type="string" required>
+  Your authentication token received from sign-in
+</ParamField>
+
+### Request Body
+
+<ParamField body="ticket" type="string" required>
+  Stock ticker symbol (e.g., "GOOGL", "AAPL", "TSLA")
+</ParamField>
+
+<ParamField body="username" type="string" required>
+  Your username associated with the account
+</ParamField>
+
+<ParamField body="amount" type="integer" required>
+  Investment amount in dollars
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/buyStock/?token=gAAAAABmX1Y2MjEFEL..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ticket": "GOOGL",
+    "username": "john_doe",
+    "amount": 5000
+  }'
+```
+
+```javascript JavaScript
+const stockDetails = {
+  ticket: "GOOGL",
+  username: "john_doe",
+  amount: 5000
+};
+
+const token = localStorage.getItem('authToken');
+const url = `/buyStock/?token=${encodeURIComponent(token)}`;
+
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(stockDetails)
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
+
+```python Python
+import requests
+
+url = "http://localhost:8000/buyStock/"
+token = "your_encrypted_token_here"
+
+payload = {
+    "ticket": "GOOGL",
+    "username": "john_doe",
+    "amount": 5000
+}
+
+params = {"token": token}
+response = requests.post(url, json=payload, params=params)
+print(response.json())
+```
+</CodeGroup>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message indicating successful purchase
+</ResponseField>
+
+#### Success Response (200)
+
+```json
+{
+  "message": "bought successfully"
+}
+```
+
+#### Error Response (403)
+
+```json
+{
+  "detail": "forbidden action pls login"
+}
+```
+
+### Implementation Details
+
+When you buy a stock:
+
+1. Token is validated (must be less than 1 hour old)
+2. Stock entry is inserted into the `stocks` table
+3. Transaction is logged in `apptransactions` table
+4. Database changes are committed
+
+## Sell Stock
+
+Sell a stock from your portfolio.
+
+### Endpoint
+
+```
+POST /sellstock/?token={your_token}
+```
+
+### Query Parameters
+
+<ParamField query="token" type="string" required>
+  Your authentication token received from sign-in
+</ParamField>
+
+### Request Body
+
+<ParamField body="ticket" type="string" required>
+  Stock ticker symbol to sell (e.g., "GOOGL", "AAPL", "TSLA")
+</ParamField>
+
+<ParamField body="username" type="string" required>
+  Your username associated with the account
+</ParamField>
+
+<ParamField body="amount" type="integer" required>
+  Sale amount in dollars
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/sellstock/?token=gAAAAABmX1Y2MjEFEL..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ticket": "GOOGL",
+    "username": "john_doe",
+    "amount": 5000
+  }'
+```
+
+```javascript JavaScript
+const stockDetails = {
+  ticket: "GOOGL",
+  username: "john_doe",
+  amount: 5000
+};
+
+const token = localStorage.getItem('authToken');
+const url = `/sellstock/?token=${encodeURIComponent(token)}`;
+
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(stockDetails)
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
+
+```python Python
+import requests
+
+url = "http://localhost:8000/sellstock/"
+token = "your_encrypted_token_here"
+
+payload = {
+    "ticket": "GOOGL",
+    "username": "john_doe",
+    "amount": 5000
+}
+
+params = {"token": token}
+response = requests.post(url, json=payload, params=params)
+print(response.json())
+```
+</CodeGroup>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Confirmation message indicating successful sale
+</ResponseField>
+
+#### Success Response (200)
+
+```json
+{
+  "message": "sold successfully"
+}
+```
+
+#### Error Response (403)
+
+```json
+{
+  "detail": "forbidden action pls login"
+}
+```
+
+## Show Stock List
+
+Retrieve a list of all stocks in your portfolio.
+
+### Endpoint
+
+```
+POST /showstocklist/
+```
+
+### Request Body
+
+<ParamField body="username" type="string" required>
+  Your username to fetch stock holdings for
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/showstocklist/" \
+  -H "Content-Type: application/json" \
+  -d '"john_doe"'
+```
+
+```javascript JavaScript
+const username = 'john_doe';
+
+fetch('http://localhost:8000/showstocklist/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(username)
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
+
+```python Python
+import requests
+
+url = "http://localhost:8000/showstocklist/"
+username = "john_doe"
+
+response = requests.post(url, json=username)
+print(response.json())
+```
+</CodeGroup>
+
+### Response
+
+Returns a list of stock ticker symbols owned by the user.
+
+<Note>
+  This endpoint is currently in development. The response format will include stock ticker symbols with current values.
+</Note>
+
+## Stock Card
+
+Get detailed information and forecast for a specific stock.
+
+### Endpoint
+
+```
+POST /stockcard/
+```
+
+### Request Body
+
+<ParamField body="ticket" type="string" required>
+  Stock ticker symbol (e.g., "GOOGL", "AAPL", "TSLA")
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/stockcard/" \
+  -H "Content-Type: application/json" \
+  -d '"GOOGL"'
+```
+
+```javascript JavaScript
+const ticker = 'GOOGL';
+
+fetch('http://localhost:8000/stockcard/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(ticker)
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
+
+```python Python
+import requests
+
+url = "http://localhost:8000/stockcard/"
+ticket = "GOOGL"
+
+response = requests.post(url, json=ticket)
+print(response.json())
+```
+</CodeGroup>
+
+### Response
+
+Returns historical stock data and Prophet model forecast.
+
+<Note>
+  This endpoint uses the `fetch_stock_data()` function to retrieve historical data from Yahoo Finance and will include forecasted values using the Prophet time series model.
+</Note>
+
+## Database Schema
+
+### Stocks Table
+
+Portfolio holdings are stored in the `stocks` table:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `ticket` | varchar(20) | Stock ticker symbol |
+| `username` | varchar(20) | User who owns the stock (foreign key) |
+| `amount` | integer | Investment amount in dollars |
+| `dateOfInvestment` | timestamp | When the stock was purchased |
+
+### Transactions Table
+
+All stock operations are logged in `apptransactions`:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `atTime` | timestamp | Transaction timestamp |
+| `username` | varchar(10) | User performing action |
+| `description` | varchar(30) | Transaction description |
+
+## Data Models
+
+The `stock` Pydantic model defines the request schema:
+
+```python
+class stock(BaseModel):
+    ticket: str
+    username: str
+    amount: int
+```
+
+## Error Handling
+
+<Warning>
+  **Token Expiration:** Tokens expire after 1 hour. If you receive a 403 error, sign in again to get a new token.
+</Warning>
+
+### Common Errors
+
+| Status Code | Error | Solution |
+|-------------|-------|----------|
+| 403 | Forbidden action | Token expired or invalid - sign in again |
+| 500 | Server error | Check request format and database connectivity |
+
+## Next Steps
+
+<Card title="Chat Endpoint" icon="message" href="/api/chat-endpoint">
+  Learn how to use the AI-powered chat interface for stock analysis
+</Card>

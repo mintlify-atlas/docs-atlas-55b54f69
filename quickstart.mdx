@@ -1,80 +1,215 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: 'Get up and running with The Bounce Project in 5 minutes'
 ---
 
-## Get started in three steps
+## Get Started in 5 Minutes
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+This guide will walk you through installing and making your first stock query with The Bounce Project.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  **Prerequisites**: Ensure you have Node.js 18+, Python 3.12+, and pnpm installed on your system.
 </Note>
+
+<Steps>
+  <Step title="Clone the Repository">
+    First, clone The Bounce Project repository to your local machine:
+    
+    ```bash
+    git clone https://github.com/vineetprash/byteClub_AB05.git
+    cd byteClub_AB05
+    ```
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install dependencies for both the client and server:
+    
+    <CodeGroup>
+    ```bash Client (Frontend)
+    cd client
+    pnpm install
+    ```
+    
+    ```bash Server (Backend)
+    cd server
+    pip install .
+    ```
+    </CodeGroup>
+    
+    <Info>
+      The server installation will download several large AI models including the CardiffNLP sentiment model and Prophet dependencies. This may take a few minutes.
+    </Info>
+  </Step>
+
+  <Step title="Start the Backend Server">
+    Navigate to the server folder and start the Gradio API server:
+    
+    ```bash
+    cd server/server
+    python app.py
+    ```
+    
+    You should see output indicating the Gradio server is running on `http://127.0.0.1:7860`:
+    
+    ```
+    Running on local URL:  http://127.0.0.1:7860
+    ```
+    
+    <Warning>
+      Keep this terminal window open. The backend must be running for the frontend to communicate with the AI models.
+    </Warning>
+  </Step>
+
+  <Step title="Start the Frontend">
+    Open a new terminal window, navigate to the client folder, and start the development server:
+    
+    ```bash
+    cd client
+    pnpm run dev
+    ```
+    
+    The Vite development server will start and display the local URL:
+    
+    ```
+    VITE v5.1.6  ready in 423 ms
+    
+    ➜  Local:   http://localhost:5173/
+    ➜  Network: use --host to expose
+    ```
+  </Step>
+
+  <Step title="Make Your First Query">
+    Open your browser to `http://localhost:5173`. You'll see the chat interface.
+    
+    Type a stock-related question in natural language, such as:
+    
+    <CodeGroup>
+    ```text Example Query 1
+    Should I invest in Apple?
+    ```
+    
+    ```text Example Query 2
+    Is Tesla stock going up?
+    ```
+    
+    ```text Example Query 3
+    Tell me about Microsoft stock performance
+    ```
+    </CodeGroup>
+    
+    Click the send button and wait for the AI to analyze the stock.
+  </Step>
+
+  <Step title="View Results">
+    The system will display:
+    
+    1. **AI Recommendation**: Natural language response about whether to buy, hold, or sell
+    2. **Stock Price Chart**: Historical data and 365-day future predictions
+    3. **News Headlines**: Recent trending articles related to the stock
+    
+    <Tip>
+      The analysis typically takes 10-30 seconds as the system fetches real-time data, analyzes sentiment, and generates predictions.
+    </Tip>
+  </Step>
+</Steps>
+
+## Understanding the Response
+
+When you query a stock, The Bounce Project returns three types of information:
+
+### 1. AI-Generated Recommendation
+
+The chat interface displays a natural language response based on sentiment analysis:
+
+<CodeGroup>
+```text Positive Sentiment (Buy)
+The stock [Name] has momentum. Recent trends suggest that the stock is going up and it is a good time to buy the stock and hold it for a while.
+```
+
+```text Neutral Sentiment (Hold)
+The stock [Name] is stable currently. It won't have a lot of positive or negative fluctuations and you should hold it if you have it but no need to buy on priority.
+```
+
+```text Negative Sentiment (Sell)
+The stock [Name] is not doing well. Recent trends suggest that the stock is going down and it is a good time to sell the stock and not buy it.
+```
+</CodeGroup>
+
+### 2. Predictive Chart
+
+An interactive Plotly chart showing:
+- Historical stock prices from 2020-01-01 to 2024-03-01
+- Prophet model predictions for the next 365 days
+- Trend lines and confidence intervals
+
+### 3. News Headlines
+
+Recent headlines scraped from Business Today related to the queried stock, providing context for the recommendation.
+
+## Architecture Overview
+
+Here's how your query flows through the system:
+
+```mermaid
+graph LR
+    A[User Query] --> B[React Frontend]
+    B --> C[Gradio Client]
+    C --> D[Python Backend]
+    D --> E[Stock Identification]
+    E --> F[Data Fetching]
+    F --> G[yFinance API]
+    F --> H[News Scraping]
+    H --> I[Sentiment Analysis]
+    G --> J[Prophet Forecasting]
+    I --> K[LLM Generation]
+    J --> L[Results]
+    K --> L
+    L --> B
+```
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="Connection refused at http://127.0.0.1:7860">
+    This means the backend server isn't running. Make sure you've started `app.py` in the server directory and see the Gradio confirmation message.
+  </Accordion>
+  
+  <Accordion title="Module not found errors">
+    Ensure all dependencies are installed:
+    ```bash
+    # For client
+    cd client && pnpm install
+    
+    # For server
+    cd server && pip install .
+    ```
+  </Accordion>
+  
+  <Accordion title="Slow response times">
+    The first query may be slow as models load into memory. Subsequent queries should be faster. The system:
+    - Downloads stock data from Yahoo Finance
+    - Scrapes and analyzes multiple news articles
+    - Runs transformer models for sentiment analysis
+    - Generates 365-day forecasts
+  </Accordion>
+  
+  <Accordion title="API token errors">
+    The backend uses EdenAI for text generation. The token in `app.py:13` may need to be updated if you encounter authentication errors.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation Guide" icon="download" href="/installation">
+    Learn about detailed installation options and configuration
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore the backend API endpoints and data structures
+  </Card>
+</CardGroup>
+
+<Tip>
+  Want to modify the prediction window? The forecast period is set in `server/app.py:124` with `make_forecast(model, 365)` where 365 is the number of days to predict.
+</Tip>

@@ -1,0 +1,508 @@
+---
+title: 'Portfolio Management'
+description: 'Track investments and view stock performance'
+icon: 'briefcase'
+---
+
+## Overview
+
+The Bounce Project includes a portfolio management interface that allows users to track their stock investments. The ProfilePage component displays your current holdings and provides quick access to view individual stock performance.
+
+<Note>
+  The current implementation provides a UI foundation for portfolio management. The backend integration for storing and managing real portfolio data is designed for future enhancement.
+</Note>
+
+## Portfolio Interface
+
+The portfolio is displayed in a clean card-based UI:
+
+```jsx
+// From ProfilePage.jsx:3-64
+const ProfilePage = () => {
+  return (
+    <div className="flex items-center h-full w-max justify-center m-4">
+      <div className="w-80">
+        <div className="bg-black shadow-xl rounded-lg py-3 p-6">
+          {/* User Profile Section */}
+          <div className="flex justify-evenly items-center">
+            <div className="photo-wrapper p-2">
+              <img
+                className="w-32 h-32 rounded-full mx-auto"
+                src="https://www.gravatar.com/avatar/2acfb745ecf9d4dccb3364752d17f65f?s=260&d=mp"
+                alt="John Doe"
+              />
+            </div>
+            <div>
+              <h3 className="text-center text-xl text-white font-medium leading-8 font-mono">
+                Sumit singh
+              </h3>
+            </div>
+          </div>
+
+          {/* Portfolio Section */}
+          <div className="p-2">
+            <div className="border-y-2 p-1 text-center">
+              <div>
+                <h2 className="font-semibold text-white font-mono">
+                  Your portfolio
+                </h2>
+              </div>
+            </div>
+
+            {/* Holdings List */}
+            <div className="mt-4 flex-col flex gap-2 text-white">
+              <div className="flex gap-3 border rounded-sm hover:text-blue-500 font-mono p-1">
+                <div className="ml-3">Bank Nifty</div>
+                <div>2{/* up or down logo*/}</div>
+              </div>
+
+              <div className="flex gap-3 border rounded-sm hover:text-blue-500 font-mono p-1">
+                <div className="ml-3">Bank Nifty</div>
+                <div>2{/*logo*/}</div>
+              </div>
+              
+              <div className="flex gap-3 border rounded-sm hover:text-blue-500 font-mono p-1">
+                <div className="ml-3">Bank Nifty</div>
+                <div>2{/*logo*/}</div>
+              </div>
+            </div>
+
+            {/* View Profile Link */}
+            <div className="text-center my-3">
+              <a
+                className="text-xs text-white hover:underline font-medium"
+                href="#"
+              >
+                View Profile
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+## Current Features
+
+<CardGroup cols={2}>
+  <Card title="User Profile" icon="user">
+    Display user avatar and name for personalized experience
+  </Card>
+  <Card title="Holdings List" icon="list">
+    View your current stock positions in a clean list format
+  </Card>
+  <Card title="Interactive Items" icon="hand-pointer">
+    Hover effects on holdings for improved UX
+  </Card>
+  <Card title="Profile Access" icon="arrow-up-right-from-square">
+    Link to detailed profile page for extended functionality
+  </Card>
+</CardGroup>
+
+## Portfolio Display Structure
+
+<Steps>
+  <Step title="User Identity">
+    Profile picture and username displayed at the top
+  </Step>
+  
+  <Step title="Portfolio Header">
+    "Your portfolio" section divider for clear organization
+  </Step>
+  
+  <Step title="Holdings Items">
+    List of stocks with ticker names and performance indicators (placeholder for actual data)
+  </Step>
+  
+  <Step title="View More">
+    Link to expanded profile page with additional details
+  </Step>
+</Steps>
+
+## UI Components
+
+The portfolio uses modern UI libraries for a polished look:
+
+```jsx
+// NextUI components used
+import { Card, CardBody, CardHeader, Divider } from "@nextui-org/react";
+
+// Styling approach
+// - Tailwind CSS for responsive design
+// - Dark theme (bg-black, text-white)
+// - Hover effects for interactivity
+// - Rounded corners and shadows for depth
+```
+
+## Integration with Stock Analysis
+
+The portfolio interface is designed to work with the main application flow:
+
+```jsx
+// From App.jsx:40-86
+function App() {
+  const [displayedResponse, setDisplay] = useState("");
+  const [userQuery, setUserQuery] = useState("");
+  const [articles, setArticles] = useState("");
+  const [dataframe, setDataframe] = useState({});
+
+  return (
+    <div className="h-screen bg-gradient-to-r from-[#092735] to-[#065e61]">
+      <div>
+        <NavBar />
+      </div>
+      <div className="main flex flex-row gap-3 w-full h-full justify-center items-center pb-16 overflow-hidden fixed backdrop-blur-sm">
+        {/* Left Side: Analysis Results */}
+        <div id="supportingData" className="flex flex-col h-full w-1/2 relative m-4 justify-center items-start gap-1">
+          <div id="1" className={`flex h-1/2 m-4 justify-center items-center`}>
+            <Articles articles={articles} />
+          </div>
+          <div id="2" className={`flex h-1/2 m-4 justify-center items-center`}>
+            <StockHistoryGraph dataframe={dataframe} />
+          </div>
+        </div>
+
+        {/* Right Side: Chat Interface */}
+        <div id="3" className={`flex w-1/2 h-full p-4 justify-center items-center backdrop-blur-sm`}>
+          <UserChat
+            displayedResponse={displayedResponse}
+            setDisplay={setDisplay}
+            userQuery={userQuery}
+            setUserQuery={setUserQuery}
+            fetchResponse={fetchResponse}
+            setArticles={setArticles}
+            setDataframe={setDataframe}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+## Data Flow Architecture
+
+### How Portfolio Management Fits In
+
+<Steps>
+  <Step title="Query Stock">
+    User asks about a stock via the chat interface
+  </Step>
+  
+  <Step title="Analyze & Recommend">
+    System performs sentiment analysis and generates prediction
+  </Step>
+  
+  <Step title="View Results">
+    Articles, forecast chart, and recommendation displayed
+  </Step>
+  
+  <Step title="Make Decision">
+    User decides to buy, hold, or sell based on analysis
+  </Step>
+  
+  <Step title="Update Portfolio">
+    (Future feature) Transaction recorded and portfolio updated
+  </Step>
+</Steps>
+
+<Info>
+  The current implementation focuses on analysis and recommendations. The buy/sell transaction flow is ready for backend integration.
+</Info>
+
+## Stock Visualization
+
+When analyzing holdings, users see detailed charts:
+
+```jsx
+// From StockHistoryGraph.jsx:5-53
+const StockHistoryGraph = ({ dataframe }) => {
+  const [hasData, setHasData] = useState(false);
+  
+  useEffect(() => {
+    if (dataframe !== null && dataframe.data) {
+      setHasData(true);
+      
+      // Extract dates and prices from Prophet forecast
+      const dx = dataframe.data.map((item) => item[0]);  // Dates
+      const dy = dataframe.data.map((item) => item[18]); // Predictions (yhat)
+      
+      const plotData = [{
+        x: dx,
+        y: dy,
+        type: "scatter",
+        mode: "lines",
+        marker: { color: "white" }
+      }];
+      
+      const layout = {
+        title: "Stock History",
+        xaxis: { title: "Date" },
+        yaxis: { title: "Price" },
+        plot_bgcolor: "black",
+        paper_bgcolor: "black",
+        font: { color: "white" }
+      };
+      
+      Plotly.newPlot("stock-graph", plotData, layout);
+    }
+  }, [dataframe]);
+  
+  return (
+    <>
+      {!hasData ? (
+        <div className="flex text-white p-4 m-4 rounded-lg relative bottom-24 bg-black opacity-50">
+          <p>Ask a query to generate results</p>
+        </div>
+      ) : (
+        <div id="stock-graph" className="flex text-white p-4 m-4 rounded-lg relative bottom-24 bg-black opacity-50"></div>
+      )}
+    </>
+  );
+};
+```
+
+## Articles Component
+
+View news sentiment for stocks in your portfolio:
+
+```jsx
+// From Articles.jsx:4-33
+function Articles({ articles }) {
+  return (
+    <div className="flex flex-col text-white m-4">
+      <div className="flex flex-row gap-3 w-full h-full justify-center items-center">
+        <div className="w-full">
+          <Card
+            isPressable
+            isBlurred
+            fullWidth
+            className="bg-black text-white h-48 w-fit opacity-80"
+          >
+            <CardHeader>
+              <h3>Trending headlines: </h3>
+            </CardHeader>
+            <Divider />
+            <CardBody>
+              {articles ? (
+                <p>{articles}</p>
+              ) : (
+                <p>Ask a query to generate results</p>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+## Future Enhancements
+
+The portfolio system is architected to support:
+
+<CardGroup cols={2}>
+  <Card title="Buy/Sell Actions" icon="arrow-right-arrow-left">
+    Execute trades directly from the recommendation interface
+  </Card>
+  <Card title="Performance Tracking" icon="chart-mixed">
+    Calculate portfolio returns, gains/losses, and ROI
+  </Card>
+  <Card title="Database Integration" icon="database">
+    Persist portfolio data using SQLAlchemy (already in dependencies)
+  </Card>
+  <Card title="Real-time Updates" icon="rotate">
+    Live price updates for holdings using WebSocket connections
+  </Card>
+  <Card title="Diversification Analysis" icon="chart-pie">
+    Sector allocation, risk metrics, and rebalancing suggestions
+  </Card>
+  <Card title="Transaction History" icon="clock-rotate-left">
+    Complete audit trail of all buy/sell activities
+  </Card>
+</CardGroup>
+
+## Backend Architecture (Planned)
+
+The project includes database dependencies for future implementation:
+
+```toml
+# From pyproject.toml:10-12
+sqlalchemy = "^2.0.28"
+starlette = "^0.36.3"
+pydantic = "^2.6.4"
+```
+
+### Proposed Database Schema
+
+```python
+# Conceptual schema for portfolio management
+class Portfolio(Base):
+    __tablename__ = "portfolios"
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"))
+    ticker = Column(String)  # e.g., "AAPL"
+    quantity = Column(Integer)
+    purchase_price = Column(Float)
+    purchase_date = Column(DateTime)
+    
+class Transaction(Base):
+    __tablename__ = "transactions"
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id"))
+    ticker = Column(String)
+    action = Column(Enum("BUY", "SELL"))
+    quantity = Column(Integer)
+    price = Column(Float)
+    timestamp = Column(DateTime, default=datetime.now)
+```
+
+<Note>
+  The `Login.jsx` and `Signup.jsx` routes in `/home/daytona/workspace/source/client/src/Routes/` indicate user authentication is planned, which would enable personalized portfolios.
+</Note>
+
+## Component-Based Architecture
+
+The portfolio system uses modular components:
+
+```
+App.jsx (Main Container)
+├── NavBar.jsx (Navigation)
+├── ProfilePage.jsx (Portfolio Display) ← Current focus
+├── UserChat.jsx (Query Interface)
+├── Articles.jsx (News Display)
+└── StockHistoryGraph.jsx (Price Charts)
+```
+
+Each component has a single responsibility:
+
+| Component | Purpose | State |
+|-----------|---------|-------|
+| `ProfilePage` | Display portfolio holdings | Static (hardcoded) |
+| `UserChat` | Handle user queries | Response history |
+| `Articles` | Show analyzed news | Articles array |
+| `StockHistoryGraph` | Render forecast chart | Dataframe object |
+
+## Styling & Design System
+
+The portfolio uses a consistent dark theme:
+
+```jsx
+// Color palette
+const theme = {
+  background: "from-[#092735] to-[#065e61]",  // Gradient background
+  cards: "bg-black opacity-80",               // Card backgrounds
+  text: "text-white",                         // Primary text
+  accent: "text-blue-500",                    // Hover/active states
+  borders: "border-white",                    // Dividers
+};
+```
+
+<Tip>
+  The monospace font (`font-mono`) gives the portfolio a financial terminal aesthetic, reinforcing the stock trading theme.
+</Tip>
+
+## User Workflow
+
+### Typical Usage Pattern
+
+<Steps>
+  <Step title="View Portfolio">
+    Check current holdings in the ProfilePage component
+  </Step>
+  
+  <Step title="Research Stock">
+    Query a stock (existing holding or potential purchase) via chat
+  </Step>
+  
+  <Step title="Review Analysis">
+    Examine sentiment scores, news headlines, and Prophet forecast
+  </Step>
+  
+  <Step title="Get Recommendation">
+    Read AI-generated buy/hold/sell advice
+  </Step>
+  
+  <Step title="Make Decision">
+    (Future) Execute trade or update watchlist
+  </Step>
+</Steps>
+
+## Integration Points
+
+Portfolio management connects with:
+
+1. **Conversational AI** - Query stocks to analyze holdings
+2. **Sentiment Analysis** - Understand news impact on holdings
+3. **Stock Prediction** - Forecast future performance
+4. **User Authentication** - Personalized portfolios per user (planned)
+5. **Database** - Persist holdings and transactions (planned)
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Regular Reviews" icon="calendar-check">
+    Analyze your holdings weekly using the sentiment + forecast tools
+  </Card>
+  <Card title="Diversification" icon="layer-group">
+    Don't put all capital in one stock - spread risk across sectors
+  </Card>
+  <Card title="Set Targets" icon="bullseye">
+    Use Prophet forecasts to set profit targets and stop losses
+  </Card>
+  <Card title="Track News" icon="newspaper">
+    Monitor sentiment changes for early warnings of trend reversals
+  </Card>
+</CardGroup>
+
+<Warning>
+  **Disclaimer:** The Bounce Project is a research tool, not a licensed financial advisor. Always do your own research and consult with financial professionals before making investment decisions.
+</Warning>
+
+## Performance Metrics (Planned)
+
+Future versions could calculate:
+
+```python
+# Conceptual performance calculations
+def calculate_portfolio_metrics(holdings):
+    total_value = sum(h.quantity * get_current_price(h.ticker) for h in holdings)
+    total_cost = sum(h.quantity * h.purchase_price for h in holdings)
+    
+    absolute_return = total_value - total_cost
+    percentage_return = (absolute_return / total_cost) * 100
+    
+    return {
+        "total_value": total_value,
+        "total_cost": total_cost,
+        "absolute_return": absolute_return,
+        "percentage_return": percentage_return,
+        "top_performer": max(holdings, key=lambda h: h.current_return),
+        "worst_performer": min(holdings, key=lambda h: h.current_return)
+    }
+```
+
+## Related Features
+
+- [Conversational AI](/features/conversational-ai) - Query stocks for analysis
+- [Sentiment Analysis](/features/sentiment-analysis) - Understand news impact
+- [Stock Prediction](/features/stock-prediction) - Forecast future prices
+
+## Next Steps
+
+To enhance portfolio management:
+
+1. **Backend Development** - Implement SQLAlchemy models and FastAPI endpoints
+2. **User Authentication** - Complete login/signup flows
+3. **Transaction API** - Create buy/sell endpoints with validation
+4. **Real-time Data** - Integrate WebSocket for live price updates
+5. **Performance Dashboard** - Build analytics page with charts and metrics
+
+<Info>
+  The frontend is production-ready. Focus development efforts on backend integration to enable full portfolio functionality.
+</Info>

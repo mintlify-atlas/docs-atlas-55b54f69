@@ -1,0 +1,197 @@
+---
+title: Authentication
+description: Learn how to sign up, sign in, and authenticate with The Bounce Project
+icon: 'lock'
+---
+
+The Bounce Project uses a secure token-based authentication system to protect your account and ensure safe access to stock recommendations.
+
+## Creating an Account
+
+<Steps>
+  <Step title="Navigate to Sign Up">
+    Access the sign-up page from the main application interface.
+  </Step>
+  
+  <Step title="Provide Required Information">
+    Enter the following details:
+    - Email address
+    - Demat account information (for linking your investment account)
+    - Password and confirmation
+  </Step>
+  
+  <Step title="Accept Terms">
+    Review and accept the Terms and Conditions to proceed.
+  </Step>
+  
+  <Step title="Submit Registration">
+    Click "Create an account" to complete your registration.
+  </Step>
+</Steps>
+
+<Note>
+  Your account details are stored securely in a PostgreSQL database with encrypted credentials.
+</Note>
+
+## Signing In
+
+Once you've created an account, you can sign in to access the platform:
+
+<Steps>
+  <Step title="Enter Credentials">
+    Provide your registered email and password on the login page.
+  </Step>
+  
+  <Step title="Optional: Remember Me">
+    Check the "Remember me" option to stay logged in on your device.
+  </Step>
+  
+  <Step title="Sign In">
+    Click the "Login" button to authenticate.
+  </Step>
+</Steps>
+
+## Authentication Flow
+
+The Bounce Project implements a secure token-based authentication system:
+
+### How Authentication Works
+
+1. **Token Generation**: Upon successful login, the server generates an encrypted token using Fernet encryption
+2. **Token Storage**: The token is sent to your client and must be included in all subsequent API requests
+3. **Token Validation**: Each request validates the token to ensure it's valid and not expired
+4. **Session Duration**: Tokens are valid for **1 hour** (3600 seconds) from generation time
+
+### API Endpoints
+
+<CodeGroup>
+
+```python Sign Up Request
+from pydantic import BaseModel
+
+class signinsignup(BaseModel):
+    username: str
+    password: str
+
+# POST /signup/
+# Body: { "username": "your_username", "password": "your_password" }
+```
+
+```python Sign In Request
+# POST /signin/
+# Body: { "username": "your_username", "password": "your_password" }
+# Response: { "token": "encrypted_token_string" }
+```
+
+```python Token Validation
+def validate_token(tokenvalue):
+    '''Token is valid for 1 hour from generation.
+       Returns True if valid, False if expired or invalid.'''
+    try:
+        generationtimestamp = cipher.decrypt(tokenvalue)
+        generationtimestamp = datetime.strptime(
+            generationtimestamp.decode(),
+            "%Y-%m-%d %H:%M:%S"
+        )
+        currenttimestamp = datetime.now()
+        diff = currenttimestamp - generationtimestamp
+        if diff.seconds > 3600:  # 1 hour expiration
+            return False
+    except:
+        return False
+    return True
+```
+
+</CodeGroup>
+
+## Using Your Token
+
+After signing in, you'll receive an authentication token. Include this token as a URL parameter in all API requests:
+
+```javascript Example: Authenticated Request
+const token = "your_encrypted_token_here";
+
+// Construct URL with token parameter
+const url = `/buyStock/?token=${encodeURIComponent(token)}`;
+
+// Make authenticated request
+fetch(url, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    ticket: "AAPL",
+    username: "your_username",
+    amount: 5000
+  })
+})
+```
+
+<Warning>
+  **Token Security**: Never share your authentication token. Each token is tied to your session and expires after 1 hour of inactivity.
+</Warning>
+
+## Session Management
+
+### Token Expiration
+
+Your session token automatically expires after **1 hour** for security purposes. When your token expires:
+
+- You'll receive a `403 Forbidden` error with the message: "forbidden action pls login"
+- You'll need to sign in again to generate a new token
+- All pending requests will be rejected
+
+<Info>
+  Plan your trading sessions accordingly. If you're actively using the platform, you won't experience interruptions during the 1-hour window.
+</Info>
+
+### Transaction Logging
+
+All authentication events are logged for security and audit purposes:
+
+- Sign-up events
+- Sign-in events
+- Stock purchase/sale transactions
+
+You can review your transaction history through the platform's transaction log.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="User already exists error">
+    If you see "user already exists try to signin", this means an account with your username is already registered. Use the sign-in page instead or recover your password.
+  </Accordion>
+  
+  <Accordion title="User does not exist error">
+    If you see "user does not exists pls sign up", you need to create an account first before signing in.
+  </Accordion>
+  
+  <Accordion title="403 Forbidden error">
+    This indicates your token has expired or is invalid. Sign in again to generate a new authentication token.
+  </Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use Strong Passwords" icon="shield">
+    Create unique, complex passwords with a mix of characters, numbers, and symbols.
+  </Card>
+  
+  <Card title="Protect Your Token" icon="key">
+    Never expose your authentication token in public repositories or shared code.
+  </Card>
+  
+  <Card title="Regular Sign-ins" icon="clock">
+    Be aware of the 1-hour session limit and plan your activities accordingly.
+  </Card>
+  
+  <Card title="Secure Connection" icon="lock">
+    Always access The Bounce Project through a secure HTTPS connection.
+  </Card>
+</CardGroup>
+
+<Tip>
+  For enhanced security, consider using a password manager to generate and store your credentials securely.
+</Tip>

@@ -1,0 +1,316 @@
+---
+title: Understanding Recommendations
+description: Learn how to interpret AI-powered stock recommendations and sentiment analysis
+icon: 'lightbulb'
+---
+
+The Bounce Project provides AI-generated stock recommendations based on news sentiment analysis and predictive modeling. Understanding how these recommendations are generated helps you make informed investment decisions.
+
+## How Recommendations Are Generated
+
+The recommendation system combines multiple data sources and AI models:
+
+<Steps>
+  <Step title="News Aggregation">
+    Recent headlines are scraped from BusinessToday.in for the specific stock.
+  </Step>
+  
+  <Step title="Sentiment Analysis">
+    Each headline is analyzed using the `cardiffnlp/twitter-roberta-base-sentiment-latest` model to determine sentiment scores.
+  </Step>
+  
+  <Step title="Sentiment Aggregation">
+    Individual sentiment scores are combined into aggregate positive, neutral, and negative scores.
+  </Step>
+  
+  <Step title="Recommendation Logic">
+    Based on sentiment thresholds, the AI generates a natural language recommendation.
+  </Step>
+</Steps>
+
+## Sentiment Classification
+
+The system classifies stock sentiment into three categories:
+
+### Positive Sentiment (Bullish)
+
+<Card title="When It Triggers" icon="arrow-trend-up" color="#10b981">
+  **Condition**: Positive sentiment score > Negative sentiment score AND Neutral < 0.55
+  
+  **Recommendation**: The stock has momentum and is trending upward.
+</Card>
+
+```python Positive Sentiment Logic
+if pos > neg and neu <= 0.55:
+    payload = {
+        "text": f"Generate a sentence in natural language which tells me that the stock {name} has momentum. "
+                f"Recent trends suggest that the stock is going up and "
+                f"it is a good time to buy the stock and hold it for a while"
+    }
+```
+
+**What This Means**:
+- Recent news about the stock is predominantly positive
+- Market sentiment favors growth
+- **Suggested Action**: Consider buying or holding the stock
+
+<Warning>
+  Positive sentiment doesn't guarantee price increases. Always conduct additional research and consider your risk tolerance.
+</Warning>
+
+### Neutral Sentiment (Stable)
+
+<Card title="When It Triggers" icon="minus" color="#6b7280">
+  **Condition**: Neutral sentiment score > 0.55
+  
+  **Recommendation**: The stock is stable with minimal volatility expected.
+</Card>
+
+```python Neutral Sentiment Logic
+if neu > 0.55:
+    payload = {
+        "text": f"Generate a sentence in natural language which tells me that the stock {name} is stable currently. "
+                f"It wont have a lot of positive or negative fluctuations and you should hold it if you have it but "
+                f"no need to buy on priority"
+    }
+```
+
+**What This Means**:
+- News sentiment is balanced or non-committal
+- No strong positive or negative catalysts identified
+- **Suggested Action**: Hold if you own it, but not a priority purchase
+
+<Info>
+  A neutral rating of 0.55 (55%) is the threshold used to identify stable stocks. This calibrated threshold helps filter out noise in market sentiment.
+</Info>
+
+### Negative Sentiment (Bearish)
+
+<Card title="When It Triggers" icon="arrow-trend-down" color="#ef4444">
+  **Condition**: Negative sentiment score > Positive sentiment score
+  
+  **Recommendation**: The stock is facing headwinds and declining.
+</Card>
+
+```python Negative Sentiment Logic
+if neg > pos:
+    payload = {
+        "text": f"Generate a sentence in natural language which tells me that the stock {name} is not doing well. "
+                f"Recent trends suggest that the stock is going down and "
+                f"it is a good time to sell the stock and not buy it"
+    }
+```
+
+**What This Means**:
+- Recent news about the stock is predominantly negative
+- Market sentiment suggests decline
+- **Suggested Action**: Consider selling or avoiding the stock
+
+<Warning>
+  Negative sentiment may present buying opportunities for contrarian investors. Evaluate whether negative news is temporary or structural.
+</Warning>
+
+## Sentiment Score Calculation
+
+The system aggregates sentiment across multiple news headlines:
+
+```python Sentiment Aggregation Process
+neg = 0
+pos = 0
+neu = 0
+
+# Analyze each headline
+for headline in news_list:
+    encoded_input = tokenizer(headline, return_tensors='pt')
+    output = model(**encoded_input)
+    scores = output[0][0].detach().numpy()
+    scores = softmax(scores)
+    
+    # Accumulate scores
+    neg = neg + scores[0]  # Negative score
+    neu = neu + scores[1]  # Neutral score
+    pos = pos + scores[2]  # Positive score
+
+# Normalize to percentages
+sum = neg + neu + pos
+neg = neg / sum
+neu = neu / sum
+pos = pos / sum
+```
+
+<Note>
+  Scores are normalized so that `neg + neu + pos = 1.0` (100%). This gives you a clear percentage breakdown of overall sentiment.
+</Note>
+
+## Recommendation Examples
+
+Here's how different sentiment profiles translate to recommendations:
+
+<CardGroup cols={2}>
+  <Card title="Strong Buy Signal" icon="circle-check">
+    **Scores**: Positive: 0.65, Neutral: 0.20, Negative: 0.15
+    
+    **Recommendation**: "The stock has strong momentum. Recent trends are highly positive. Good time to buy."
+  </Card>
+  
+  <Card title="Hold Signal" icon="hand">
+    **Scores**: Positive: 0.22, Neutral: 0.58, Negative: 0.20
+    
+    **Recommendation**: "The stock is stable currently. Hold if you own it, but not a priority purchase."
+  </Card>
+  
+  <Card title="Sell Signal" icon="triangle-exclamation">
+    **Scores**: Positive: 0.15, Neutral: 0.25, Negative: 0.60
+    
+    **Recommendation**: "The stock is facing challenges. Recent trends suggest decline. Consider selling."
+  </Card>
+  
+  <Card title="Mild Positive" icon="thumbs-up">
+    **Scores**: Positive: 0.45, Neutral: 0.35, Negative: 0.20
+    
+    **Recommendation**: "The stock shows positive momentum. Consider accumulating positions."
+  </Card>
+</CardGroup>
+
+## Understanding the AI Model
+
+The sentiment analysis uses a specialized financial sentiment model:
+
+<Card title="Model: cardiffnlp/twitter-roberta-base-sentiment-latest" icon="brain">
+  **Type**: RoBERTa-based sequence classification
+  
+  **Training**: Trained on Twitter data with financial market context
+  
+  **Output**: Three-class classification (negative, neutral, positive)
+  
+  **Accuracy**: Optimized for short-form text like news headlines and social media
+</Card>
+
+```python Model Implementation
+MODEL = f"cardiffnlp/twitter-roberta-base-sentiment-latest"
+tokenizer = AutoTokenizer.from_pretrained(MODEL)
+config = AutoConfig.from_pretrained(MODEL)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL)
+```
+
+<Info>
+  The RoBERTa model is specifically fine-tuned for sentiment analysis on financial and market-related text, making it highly effective for stock recommendation use cases.
+</Info>
+
+## Limitations and Disclaimers
+
+<Warning>
+  **Investment Disclaimer**: The Bounce Project provides informational analysis only. These are NOT financial advice. Always:
+  
+  - Conduct your own research
+  - Consult with licensed financial advisors
+  - Consider your risk tolerance
+  - Diversify your portfolio
+  - Understand that past performance doesn't guarantee future results
+</Warning>
+
+### Known Limitations
+
+<AccordionGroup>
+  <Accordion title="News Source Dependency">
+    Recommendations are based on headlines from BusinessToday.in. Limited news sources may not capture the full market picture.
+  </Accordion>
+  
+  <Accordion title="Short-term Focus">
+    Sentiment analysis reflects recent news trends, which may not align with long-term fundamentals.
+  </Accordion>
+  
+  <Accordion title="Market Volatility">
+    During high-volatility periods, sentiment can change rapidly. Recommendations may become outdated quickly.
+  </Accordion>
+  
+  <Accordion title="No Fundamental Analysis">
+    The system doesn't evaluate financial statements, earnings, or company fundamentals - only news sentiment.
+  </Accordion>
+  
+  <Accordion title="Model Bias">
+    AI models can have inherent biases. Sentiment scores should be one factor among many in your decision-making.
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices for Using Recommendations
+
+<Steps>
+  <Step title="Use as a Starting Point">
+    Treat AI recommendations as initial research, not final decisions.
+  </Step>
+  
+  <Step title="Cross-Reference Sources">
+    Verify sentiment with other news sources and financial data platforms.
+  </Step>
+  
+  <Step title="Consider Time Horizon">
+    Short-term sentiment may differ from long-term investment value.
+  </Step>
+  
+  <Step title="Review Supporting Data">
+    Always examine the actual news headlines and price predictions provided alongside recommendations.
+  </Step>
+  
+  <Step title="Track Accuracy">
+    Monitor how past recommendations performed to calibrate your trust in the system.
+  </Step>
+</Steps>
+
+<Tip>
+  Create a diversified portfolio strategy that doesn't rely solely on AI recommendations. Use The Bounce Project as one tool in your investment toolkit.
+</Tip>
+
+## Interpreting Recommendation Language
+
+The AI generates natural language recommendations with specific phrasing:
+
+| Phrase | Meaning | Suggested Action |
+|--------|---------|------------------|
+| "has momentum" | Positive trend detected | Consider buying |
+| "going up" | Bullish sentiment | Potential buy signal |
+| "stable currently" | Neutral sentiment | Hold existing positions |
+| "no need to buy on priority" | Low urgency | Focus elsewhere |
+| "not doing well" | Negative trend | Exercise caution |
+| "going down" | Bearish sentiment | Consider selling |
+
+<Note>
+  The AI uses conversational language intentionally to make recommendations accessible. However, always look at the underlying sentiment scores for precise data.
+</Note>
+
+## Advanced: Customizing Thresholds
+
+For developers or advanced users who want to adjust the recommendation logic:
+
+```python Threshold Customization
+# Default neutral threshold
+NEUTRAL_THRESHOLD = 0.55
+
+# Example: More aggressive strategy (lower neutral threshold)
+AGGRESSIVE_THRESHOLD = 0.45
+
+# Example: Conservative strategy (higher neutral threshold)
+CONSERVATIVE_THRESHOLD = 0.65
+```
+
+<Info>
+  Lower thresholds generate more buy/sell signals. Higher thresholds result in more hold recommendations. Adjust based on your risk profile.
+</Info>
+
+## Getting More from Recommendations
+
+Combine recommendations with other data points:
+
+<CardGroup cols={3}>
+  <Card title="Price Forecasts" icon="chart-line">
+    Review the 365-day Prophet prediction alongside sentiment for trend confirmation.
+  </Card>
+  
+  <Card title="News Headlines" icon="newspaper">
+    Read the actual headlines to understand the context behind sentiment scores.
+  </Card>
+  
+  <Card title="Historical Data" icon="clock-rotate-left">
+    Compare current sentiment with past performance visible in the stock graph.
+  </Card>
+</CardGroup>
