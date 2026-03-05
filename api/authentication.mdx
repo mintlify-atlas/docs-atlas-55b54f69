@@ -27,9 +27,9 @@ POST /signup/
   User password (max 10 characters)
 </ParamField>
 
-<Note>
-  The request model accepts `username` and `password` fields. The `phone` field is used internally but should be included in the signup process.
-</Note>
+<Warning>
+  **Known Issue**: The current Pydantic model (`signinsignup`) only includes `username` and `password` fields, but the backend code attempts to access a `phone` field that doesn't exist in the request model. This will cause an AttributeError during signup. The database schema expects a phone field - this should be added to the Pydantic model for the signup endpoint to work correctly.
+</Warning>
 
 ### Request Example
 

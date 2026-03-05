@@ -1,0 +1,136 @@
+---
+title: 'NavBar'
+description: 'Navigation bar component with authentication links'
+icon: 'bars'
+---
+
+## Overview
+
+The `NavBar` component provides the main navigation header for The Bounce Project, featuring branding and authentication action buttons. Built with NextUI components and React Router.
+
+## Component Structure
+
+The NavBar component is located at `client/src/Components/NavBar.jsx` and provides:
+
+- Brand display ("BYTE CLUB")
+- Login button linking to `/login` route
+- Sign Up button linking to `/signup` route  
+- Profile button linking to `/profile` route
+
+## Props
+
+This component does not accept any props. It's a standalone navigation component.
+
+## Implementation
+
+```jsx NavBar.jsx
+import {
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  Button,
+} from "@nextui-org/react";
+import { Link } from "react-router-dom";
+
+function NavBar() {
+  return (
+    <Navbar className="bg-black text-white opacity-60 h-12">
+      <NavbarBrand>
+        <p className="font-bold text-white">BYTE CLUB</p>
+      </NavbarBrand>
+
+      <NavbarContent justify="end" className="text-white">
+        <NavbarItem>
+          <Link to="/login">
+            <Button variant="bordered" size="sm" className="text-white">
+              Login
+            </Button>
+          </Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link to="/signup">
+            <Button variant="bordered" size="sm" className="text-white">
+              Sign Up
+            </Button>
+          </Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link to="/profile">
+            <Button variant="bordered" size="sm" className="text-white">
+              Profile
+            </Button>
+          </Link>
+        </NavbarItem>
+      </NavbarContent>
+    </Navbar>
+  );
+}
+
+export default NavBar;
+```
+
+## Usage
+
+The NavBar is used in the main application layout:
+
+```jsx App.jsx
+import NavBar from "./Components/NavBar";
+
+function App() {
+  return (
+    <div className="h-screen bg-gradient-to-r from-[#092735] to-[#065e61]">
+      <div>
+        <NavBar />
+      </div>
+      {/* Rest of the application */}
+    </div>
+  );
+}
+```
+
+## Styling
+
+The component uses the following styling approach:
+
+- **Background**: Black with 60% opacity (`bg-black opacity-60`)
+- **Height**: Fixed at 48px (`h-12`)
+- **Text**: White color for all text and buttons
+- **Buttons**: Bordered variant with small size from NextUI
+
+## Dependencies
+
+<CardGroup cols={2}>
+  <Card title="NextUI Components" icon="react">
+    Uses NextUI Navbar components for layout and structure
+  </Card>
+  <Card title="React Router" icon="route">
+    Uses Link component for client-side navigation
+  </Card>
+</CardGroup>
+
+## Navigation Routes
+
+| Button | Route | Description |
+|--------|-------|-------------|
+| Login | `/login` | Navigates to the login page |
+| Sign Up | `/signup` | Navigates to the signup page |
+| Profile | `/profile` | Navigates to the user profile page |
+
+## Customization
+
+To customize the NavBar:
+
+1. **Change Brand Name**: Update the text in `<NavbarBrand>` (line 17)
+2. **Add More Links**: Add additional `<NavbarItem>` components in the `<NavbarContent>` section
+3. **Modify Styling**: Update the className props for different colors or opacity
+4. **Add Mobile Menu**: Implement `<NavbarMenuToggle>` and `<NavbarMenu>` for responsive design
+
+<Tip>
+  The component currently displays all navigation options regardless of authentication state. Consider adding conditional rendering based on whether a user is logged in.
+</Tip>
+
+## Related Components
+
+- [UserChat](/api/components/user-chat) - Main chat interface component
+- [ProfilePage](/api/components/profile-page) - User profile and portfolio display

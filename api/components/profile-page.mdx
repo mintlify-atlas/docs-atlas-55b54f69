@@ -1,0 +1,168 @@
+---
+title: 'ProfilePage'
+description: 'User profile and portfolio display component'
+icon: 'user'
+---
+
+## Overview
+
+The `ProfilePage` component displays user profile information and their stock portfolio. It shows the user's profile picture, name, and a list of their stock investments.
+
+## Component Structure
+
+Located at `client/src/Components/ProfilePage.jsx`, this component provides:
+
+- User profile section with avatar and name
+- Portfolio overview with stock holdings
+- Static portfolio display (currently with placeholder data)
+
+## Props
+
+This component does not accept any props. The current implementation uses hardcoded data.
+
+<Note>
+  The ProfilePage currently displays static data ("Sumit singh" and "Bank Nifty" holdings). In a production implementation, this should be replaced with data fetched from the `/showstocklist/` API endpoint.
+</Note>
+
+## Implementation
+
+```jsx ProfilePage.jsx
+import React from "react";
+
+const ProfilePage = () => {
+  return (
+    <div className="flex items-center h-full w-max justify-center m-4">
+      <div className="w-80">
+        <div className="bg-black shadow-xl rounded-lg py-3 p-6">
+          {/* Profile Header */}
+          <div className="flex justify-evenly items-center">
+            <div className="photo-wrapper p-2">
+              <img
+                className="w-32 h-32 rounded-full mx-auto"
+                src="https://www.gravatar.com/avatar/2acfb745ecf9d4dccb3364752d17f65f?s=260&d=mp"
+                alt="John Doe"
+              />
+            </div>
+            <div>
+              <h3 className="text-center text-xl text-white font-medium leading-8 font-mono">
+                Sumit singh
+              </h3>
+            </div>
+          </div>
+
+          {/* Portfolio Section */}
+          <div className="p-2">
+            <div className="border-y-2 p-1 text-center">
+              <div>
+                <h2 className="font-semibold text-white font-mono">
+                  Your portfolio
+                </h2>
+              </div>
+            </div>
+
+            {/* Stock Holdings */}
+            <div className="mt-4 flex-col flex gap-2 text-white">
+              <div className="flex gap-3 border rounded-sm hover:text-blue-500 font-mono p-1">
+                <div className="ml-3">Bank Nifty</div>
+                <div>2</div>
+              </div>
+              {/* More stock items... */}
+            </div>
+
+            <div className="text-center my-3">
+              <a
+                className="text-xs text-white hover:underline font-medium"
+                href="#"
+              >
+                View Profile
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProfilePage;
+```
+
+## Styling
+
+The component uses the following design system:
+
+- **Card Background**: Black with shadow (`bg-black shadow-xl`)
+- **Avatar**: Circular image (32x32 rem) using Gravatar
+- **Typography**: Monospace font (`font-mono`) for clean display
+- **Hover Effects**: Blue hover state on stock items (`hover:text-blue-500`)
+- **Layout**: Flexbox for responsive alignment
+
+## Current Limitations
+
+<Warning>
+  The ProfilePage has several limitations in the current implementation:
+  
+  - **Static Data**: User name and portfolio holdings are hardcoded
+  - **No API Integration**: Does not fetch real data from the `/showstocklist/` endpoint
+  - **Missing Features**: No stock price information, performance indicators, or transaction history
+  - **Placeholder Avatar**: Uses a generic Gravatar image
+</Warning>
+
+## Integration with Backend API
+
+To make this component functional, integrate with the backend stock operations API:
+
+```javascript Fetching Portfolio Data
+const fetchPortfolio = async (username, token) => {
+  const response = await fetch(
+    `/showstocklist/?token=${encodeURIComponent(token)}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username })
+    }
+  );
+  
+  const data = await response.json();
+  return data;
+};
+```
+
+## Recommended Enhancements
+
+<Steps>
+  <Step title="Connect to API">
+    Integrate with the `/showstocklist/` endpoint to fetch real user portfolio data
+  </Step>
+  
+  <Step title="Add Authentication">
+    Retrieve username and token from authentication state/context
+  </Step>
+  
+  <Step title="Display Stock Details">
+    Show stock prices, quantity owned, and performance indicators for each holding
+  </Step>
+  
+  <Step title="Add Actions">
+    Implement buy/sell functionality directly from the profile page
+  </Step>
+</Steps>
+
+## Database Schema Reference
+
+The profile page should display data from the `stocks` table:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `ticket` | varchar(20) | Stock ticker symbol |
+| `username` | varchar(20) | User who owns the stock |
+| `amount` | integer | Investment amount |
+| `dateOfInvestment` | timestamp | Purchase date |
+
+## Related Components
+
+- [Stock Operations API](/api/stock-operations) - Backend endpoints for managing portfolio
+- [Authentication](/api/authentication) - Required for accessing portfolio data
+- [NavBar](/api/components/navbar) - Navigation component with profile link

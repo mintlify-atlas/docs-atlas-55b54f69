@@ -73,7 +73,9 @@
             "pages": [
               "api/components/user-chat",
               "api/components/stock-graphs",
-              "api/components/articles"
+              "api/components/articles",
+              "api/components/navbar",
+              "api/components/profile-page"
             ]
           }
         ]
