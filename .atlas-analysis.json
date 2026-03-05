@@ -1,0 +1,87 @@
+{
+  "projectType": "saas",
+  "projectName": "The Bounce Project",
+  "projectDescription": "An AI-powered conversational stock recommendation system with sentiment analysis and price prediction capabilities.",
+  "theme": "linden",
+  "primaryColor": "#040404",
+  "lightColor": "#b95676",
+  "darkColor": "#aeae95",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/conversational-ai",
+              "features/sentiment-analysis",
+              "features/stock-prediction",
+              "features/portfolio-management"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guide/authentication",
+              "guide/making-queries",
+              "guide/understanding-recommendations",
+              "guide/visualization"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Backend API",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/stock-operations",
+              "api/chat-endpoint"
+            ]
+          },
+          {
+            "group": "Frontend Components",
+            "pages": [
+              "api/components/user-chat",
+              "api/components/stock-graphs",
+              "api/components/articles"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Natural language stock queries with conversational AI",
+    "Real-time sentiment analysis on financial news headlines",
+    "Stock price forecasting using Prophet ML model",
+    "Interactive visualizations with historical and predicted prices",
+    "User authentication and portfolio management",
+    "Trending financial headlines related to queried stocks"
+  ],
+  "publicApiSurface": [
+    "/signup/ - User registration endpoint",
+    "/signin/ - User authentication endpoint",
+    "/buyStock/ - Purchase stock endpoint",
+    "/sellstock/ - Sell stock endpoint",
+    "/showstocklist/ - View user portfolio",
+    "/stockcard/ - Get stock details and forecast",
+    "/chat/ - Conversational recommendation endpoint",
+    "fetchResponse() - Main query handler",
+    "fetch_stock_name() - Extract ticker from natural language",
+    "fetch_news_sentiment() - Analyze news sentiment",
+    "make_forecast() - Generate price predictions"
+  ]
+}
